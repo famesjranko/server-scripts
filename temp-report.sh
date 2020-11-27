@@ -3,14 +3,19 @@
 # This is a simple script that prints gpu temp, cpu temp, local temp, and deltas.
 # Can be used in conjunction with cron scheduling to record temps to log.
 
-# REQUIRES: inxi or weather-util to collect local weather data, nvidia-smi for 
+# REQUIRES: weather-util or curl to collect local weather data, nvidia-smi for 
 # nvidia gpu temp, and sensors for cpu temp.
 #===============================================================================
 
 ## get local date and temp
 date=$(date "+%D - %T")
-local_temp=$(weather "ymml" | grep Temperature | awk '{print $4}' | cut -c 2-)
-#local_temp=$(inxi -w | grep Temperature | awk '{print $3, $4}')
+
+# weather-util issue when used in cron
+#local_temp=$(weather "ymml" | grep Temperature | awk '{print $4}' | cut -c 2-)
+
+# using wttr.in
+local_data=$(curl wttr.in/Melbourne?format=1 2> /dev/null)
+local_temp=$(echo $local_data | awk '{print $2}' | cut -c 2-3)
 
 ## get hardware temp
 cpu_temp=$(sensors | grep 'Package id 0' | cut -c 17-18)
