@@ -2,7 +2,6 @@
 #===============================================================================
 # This is a simple script that prints gpu temp, cpu temp, local temp, and deltas.
 # Can be used in conjunction with cron scheduling to record temps to log.
-
 # REQUIRES: curl to collect local weather data, nvidia-smi for nvidia gpu temp, 
 # and sensors for cpu temp.
 #===============================================================================
