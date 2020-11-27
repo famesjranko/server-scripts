@@ -14,6 +14,7 @@ local_temp=$(weather "ymml" | grep Temperature | awk '{print $4}' | cut -c 2-)
 
 ## get hardware temp
 cpu_temp=$(sensors | grep 'Package id 0' | cut -c 17-18)
+#cpu_temp=$(/opt/vc/bin/vcgencmd measure_temp | cut -c 6-7) # for raspberry-pi
 gpu_temp=$(nvidia-smi -q -d temperature | grep 'GPU Current Temp' | cut -c 45-46)
 
 ## calc hardware/local temp delta
