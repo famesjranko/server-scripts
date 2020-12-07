@@ -1,17 +1,20 @@
 #!/bin/bash
-#===============================================================================
-# This is a simple script that prints gpu temp, cpu temp, local temp, and deltas.
+#=========================================================================
+# This script prints gpu temp, cpu temp, local temp, and deltas.
 # Can be used in conjunction with cron scheduling to record temps to log.
-# REQUIRES: curl to collect local weather data, nvidia-smi for nvidia gpu temp, 
-# and sensors for cpu temp.
-#===============================================================================
+#
+# REQUIRES: curl to collect local weather data;
+#           nvidia-smi for nvidia gpu temp;
+#           sensors for cpu temp.
+#=========================================================================
 
-## get local date and time
+## get sys date
 date=$(date "+%D - %T")
 
-# get local temp from wttr.in
-local_data=$(curl wttr.in/Melbourne?format=1 2> /dev/null)
-local_temp=$(echo $local_data | awk '{print $2}' | cut -c 2-3)
+## get local temp
+locale=Melbourne
+local_data=$(curl wttr.in/$locale?format=%t 2> /dev/null)
+local_temp=$(echo $local_data | tr -dc '[:alnum:]' | sed 's/C$//')
 
 ## get hw temp
 cpu_temp=$(sensors | grep 'Package id 0' | cut -c 17-18)
