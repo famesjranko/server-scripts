@@ -24,7 +24,6 @@ lan1_ip=
 declare -a lan1_allowed=("")
 #declare -a lan2_allowed=("")
 
-
 ## ====================================
 ## COLLECT NETOWKR DATA
 ## ====================================
@@ -59,7 +58,6 @@ host_count() {
 hostsOn_lan1=( $hosts_lan1 )
 #hostsOn_lan2=( $hosts_lan2 )
 
-
 ## ====================================
 ## SORT NETWORK DATA
 ## ====================================
@@ -75,7 +73,6 @@ sort_hosts() {
 
 lan1_sorted=$(sort_hosts $hosts_lan1 )
 #lan2_sorted=$(sort_hosts $hosts_lan2 )
-
 
 ## ====================================
 ## DISPLAY DATA
