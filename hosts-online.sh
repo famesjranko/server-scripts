@@ -1,13 +1,13 @@
 #!/bin/bash
 
-## =========================================================================
+## ============================================================================
 ## local network host discovery script that scans for active hosts  on set
 ## networks and and compares them to a predefined 'allowed' list for matches.
 ##
 ## reguires nmap and sudo permission. to use simply set network information 
 ## in network set section.  to scan more than one network, simply uncomment 
-## 'lan2' lines and diplicate for more networks.
-## =========================================================================
+## 'lan2' lines and diplicate following numbering convention for more networks.
+## ============================================================================
 
 ## ====================================
 ## SET NETWORK INFORMATION
