@@ -39,11 +39,16 @@ lan1_mod=$(modify $lan1_ip)
 
 ## get corresponding network host search
 network_search() {
-    nmap -sn -PS $1 | grep "$2" | sed 's/.* //'
+    nmap -sn -PS -PR -PA -PU $1 | grep "$2" | sed 's/.* //'
 }
 
 hosts_lan1=$(network_search $lan1_ip $lan1_mod)
 #hosts_lan2=$(network_search $lan2_ip $lan2_mod)
+
+## exit if nmap fails to return anything
+if [[ -z "$hosts_lan1" ]] || [[ -z "$hosts_lan2" ]]; then
+    exit 1
+fi
 
 ## get number of hosts on networks
 host_count() {
@@ -59,12 +64,12 @@ hostsOn_lan1=( $hosts_lan1 )
 ## SORT NETWORK DATA
 ## ====================================
 
+## sort addresses in ascending order
 sort_hosts() {
-    local sorted=$(for h in "$@"
-                   do
+    local sorted=$(for h in "$@"; do
                        ip=$(echo "$h" | tr -d '()')
-                       echo $ip
-                  done | sort -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4)
+                       echo $ip;
+                   done | sort -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4)
     echo $sorted
 }
 
@@ -76,9 +81,7 @@ lan1_sorted=$(sort_hosts $hosts_lan1 )
 ## DISPLAY DATA
 ## ====================================
 
-## display active network hosts lan1
-printf "CURRENT ACTIVE HOSTS ON LOCAL NETWORKS: \n\n"
-
+## display active network hosts
 output() {
     # set local variables
     local lan_name=$1
@@ -97,14 +100,12 @@ output() {
     local match=0
 
     # print network info
-    printf "$lan_name \n($lan_ip) \n"
+    printf "\n$lan_name \n($lan_ip) \n"
     echo "hosts online: $3"
 
     # print active hosts and status
-    for ip in $sorted_hosts
-    do
-        for a in ${allowed_hosts[@]}
-        do
+    for ip in $sorted_hosts; do
+        for a in ${allowed_hosts[@]}; do
             if [ "$a" == "$ip" ]; then
                 printf "\t$count: $ip \t( ${GREEN}ALLOWED${RESET} )\n"
                 match=1
@@ -118,10 +119,11 @@ output() {
 
         # reset match and increment count
         match=0
-        ((i++))
+        ((count++))
     done
 }
 
+printf "CURRENT ACTIVE HOSTS ON LOCAL NETWORKS: \n"
 output $lan1_name $lan1_ip $hostsOn_lan1 "$lan1_sorted" "$lan1_allowed"
 #output $lan2_name $lan2_ip $hostsOn_lan2 "$lan2_sorted" "$lan2_allowed"
 
