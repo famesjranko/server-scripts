@@ -3,10 +3,12 @@
 ## local network host discovery script that scans for active hosts on set
 ## networks and compares them to a predefined 'allowed' list for matches.
 ##
-## reguires nmap and sudo permission. to use simply set network information
-## in network set section.  to scan more than one network, simply uncomment
-## relevant 'template' lines and follow numbering convention for variables
-## and nmap conditional check.
+## reguires nmap and sudo permission - sudo needed for UDP Ping (-PU) because 
+## nmap needs to read raw responses from the network interface
+## 
+## to use simply set network information in network set section.  to scan more 
+## than one network, simply uncomment relevant 'template' lines and follow 
+## numbering convention for variables and nmap conditional check.
 ##
 ## code structure:  1. [ NETWORK SETTINGS ]
 ##                  2. [ MAIN FUNCTIONS   ]
