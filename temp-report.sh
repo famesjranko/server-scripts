@@ -30,26 +30,17 @@ else
     local_temp=$(echo $local_data | tr -dc '[:alnum:]' | sed 's/C$//' 2> /dev/null)
 fi
 
-## check wttr data sanity 1
+## check wttr data sanity
 if [ "$local_temp" = "SorrywearerunningoutofqueriestotheweatherserviceatthemomentHereistheweatherreportforthedefaultcityjusttoshowyouwhatitlookslikeWewillgetnewqueriesassoonaspossibleYoucanfollowhttpstwittercomigorchubinfortheupdates" ]; then
     local_temp="--"
     na=1
-fi
-
-## check wttr data sanity 2
-if [ "$local_temp" = "Unknownlocationpleasetry3781421751449631608" ]; then
+elif [ "$local_temp" = "Unknownlocationpleasetry3781421751449631608" ]; then
     local_temp="--"
     na=1
-fi
-
-## check wttr data sanity 3
-if [ "$local_temp" = "- " ]; then
+elif [ "$local_temp" = "- " ]; then
     local_temp="--"
     na=1
-fi
-
-## check wttr data sanity 4
-if [ -z "$local_temp" ]; then
+elif [ -z "$local_temp" ]; then
     local_temp="--"
     na=1
 fi
