@@ -11,14 +11,45 @@
 ## get sys date
 date=$(date "+%D - %T")
 
+## set wttr n/a conditional
+na=0
+
 ## get local temp
 locale=Melbourne
 local_data=$(curl wttr.in/$locale?format=%t 2> /dev/null)
-local_temp=$(echo $local_data | tr -dc '[:alnum:]' | sed 's/C$//')
 
-## check server return value sanity - not available
-na=0
+## check wttr output against regex
+if [[ $local_data =~ .\d+.{1}C ]]; then
+    na=1
+fi
+
+## convert local_data if no wttr error code and regex passed
+if [ $? -ne 0 ] || [ $na -eq 1 ]; then
+    local_temp="--"
+else
+    local_temp=$(echo $local_data | tr -dc '[:alnum:]' | sed 's/C$//' 2> /dev/null)
+fi
+
+## check wttr data sanity 1
 if [ "$local_temp" = "SorrywearerunningoutofqueriestotheweatherserviceatthemomentHereistheweatherreportforthedefaultcityjusttoshowyouwhatitlookslikeWewillgetnewqueriesassoonaspossibleYoucanfollowhttpstwittercomigorchubinfortheupdates" ]; then
+    local_temp="--"
+    na=1
+fi
+
+## check wttr data sanity 2
+if [ "$local_temp" = "Unknownlocationpleasetry3781421751449631608" ]; then
+    local_temp="--"
+    na=1
+fi
+
+## check wttr data sanity 3
+if [ "$local_temp" = "- " ]; then
+    local_temp="--"
+    na=1
+fi
+
+## check wttr data sanity 4
+if [ -z "$local_temp" ]; then
     local_temp="--"
     na=1
 fi
