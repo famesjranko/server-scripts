@@ -18,19 +18,14 @@ na=0
 locale=Melbourne
 local_data=$(curl wttr.in/$locale?format=%t 2> /dev/null)
 
-## check wttr output against regex
-if [[ $local_data =~ .\d+.{1}C ]]; then
+## check wttr output against regex, convert if passes
+if ! [[ $local_data =~ [+][0-9].{2}C ]]; then
     na=1
-fi
-
-## convert local_data if no wttr error code and regex passed
-if [ $? -ne 0 ] || [ $na -eq 1 ]; then
-    local_temp="--"
 else
     local_temp=$(echo $local_data | tr -dc '[:alnum:]' | sed 's/C$//' 2> /dev/null)
 fi
 
-## check wttr data sanity
+## check converted wttr data sanity
 if [ "$local_temp" = "SorrywearerunningoutofqueriestotheweatherserviceatthemomentHereistheweatherreportforthedefaultcityjusttoshowyouwhatitlookslikeWewillgetnewqueriesassoonaspossibleYoucanfollowhttpstwittercomigorchubinfortheupdates" ]; then
     local_temp="--"
     na=1
