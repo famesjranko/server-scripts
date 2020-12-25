@@ -21,8 +21,8 @@ local_data=$(curl wttr.in/$locale?format=%t 2> /dev/null)
 exit_code=$?
 na=0
 
-## check wttr exit code and output against regex, remove all non-integers if passes.
-if ! [[ $local_data =~ [+][0-9].{2}C ]] || [ $error_code -ne 0 ]; then
+## check wttr exit code and output against regex and not empty, remove all non-integers if passes.
+if ! [[ $local_data =~ [+][0-9].{2}C ]] || [ $error_code -ne 0 ] || [ -z $local_data ]; then
     na=1
 else
     local_temp=$(echo $local_data | tr -dc '[:alnum:]' | sed 's/C$//' 2> /dev/null)
