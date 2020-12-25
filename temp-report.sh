@@ -43,10 +43,26 @@ else
     gpu_delta=$(($gpu_temp - $local_temp))
 fi
 
-## add leading space to local temp when less than 10 for ouput alignment
+## add leading space when values less than 10 for ouput alignment
 ## eg: transforms (9'C) into ( 9'C)
 if [ ${#local_temp} -lt 2 ]; then
     local_temp=" $local_temp"
+fi
+
+if [ ${#cpu_temp} -lt 2 ]; then
+    cpu_temp=" $cpu_temp"
+fi
+
+if [ ${#gpu_temp} -lt 2 ]; then
+    gpu_temp=" $gpu_temp"
+fi
+
+if [ ${#cpu_delta} -lt 2 ]; then
+    cpu_delta=" $cpu_delta"
+fi
+
+if [ ${#gpu_delta} -lt 2 ]; then
+    gpu_delta=" $gpu_delta"
 fi
 
 ## output
