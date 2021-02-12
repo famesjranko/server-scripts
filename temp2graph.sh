@@ -1,8 +1,12 @@
 #!/bin/bash
+# ======================================================================
+# This script prints converts the log created by temp_report.sh into a 
+# simple output for inputing into excel
+# ======================================================================
 
 ## set temp logging input/output files
-input="/home/dorothy/temp.log"
-output="/home/dorothy/temp_graph.log"
+input="temp.log"
+output="temp_graph.log"
 
 ## set variables
 date=''
@@ -18,6 +22,8 @@ hw_count=0
 ## reset file and set graphing header for output
 echo "date; time; local-temp; cpu-temp; gpu-temp" > $output
 
+## read lines from input file
+echo "parsing data from $input to $output ..."
 while IFS= read -r line
 do
   ## get variables
@@ -37,7 +43,7 @@ do
     hw_count=$((hw_count+1))
   fi
 
-  ## print variables to graphing log
+  ## print variables to output file
   if [ $hw_count -eq 2 ]; then
     echo "$date; $clock; $local_temp; $cpu_temp; $gpu_temp" >> $output
     hw_count=0
