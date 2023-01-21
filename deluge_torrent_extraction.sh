@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# This script is used for extracting archive files and then deleting the archive files after extraction is complete
+# It supports the following archive formats: zip and rar
+# It takes 3 arguments:
+#   - torrentid: the id of the torrent
+#   - torrentname: the name of the torrent
+#   - torrentpath: the path to the torrent directory
+# The extracted files will be in the same directory as the archive files
+# Usage: ./script.sh <torrentid> <torrentname> <torrentpath>
+
+formats=(zip rar)
+commands=([zip]="unzip -u" [rar]="unrar -o- e")
+
+# Arguments passed to the script
+torrentid=$1
+torrentname=$2
+torrentpath=$3
+
+# Set whether to delete archive files after extraction
+delete=false
+
+# Init extracted bool as false (empty)
+extracted=
+
+#extracted_type=""
+
+log()
+{
+    logger -t deluge-extractarchives "$@"
+}
+
+log "Torrent complete: $@"
+
+# change to the torrent directory
+cd "${torrentpath}"
+
+# loop through supported archive formats
+for format in "${formats[@]}"; do
+    # loop through files with the current archive format
+    while read file; do
+        log "Extracting \"$file\""
+        # change to the directory where the archive file is located
+        cd "$(dirname "$file")"
+        file=$(basename "$file")
+        extracted_file=$(basename ${file%.*})
+        # extract the archive file
+        if ${commands[$format]} "$file";
+            then
+                extracted=true
+                #extracted_type=".${format}"
+            else
+                log "Extraction failed for file $file"
+                extracted=
+                continue
+        fi
+    done < <(find "$torrentpath/$torrentname" -iname "*.${format}" )
+done
+
+if [[ "$extracted" && "$delete" == "true" ]] ; then
+    # Iterate through the directory and delete all files except the extracted file
+    log "Deleting all files except for $extracted_file"
+    find "$torrentpath/$torrentname" -type f ! -name "$extracted_file*" -exec sh -c '
+    for file do
+        log "Deleting file $file"
+        rm -v "$file"
+    done
+    ' sh {} +
+fi
+
+#if [[ "$extracted" ]] ; then
+#    # Iterate through the directory and delete all files ending in the extracted file type
+#    log "Deleting all files ending in $extracted_type"
+#    find "$torrentpath/$torrentname" -iname "*$extracted_type" -type f -delete
+#fi
