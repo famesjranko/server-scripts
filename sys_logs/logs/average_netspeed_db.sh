@@ -68,7 +68,8 @@ AVG(upload), \
 AVG(ping), \
 COUNT(*) \
 FROM $DATABASE_TABLE \
-WHERE DATE(datetime) BETWEEN '$start_date' AND '$end_date'")
+WHERE DATE(datetime) BETWEEN '$start_date' AND '$end_date' \
+ORDER BY datetime")
 
 # tokenise query result
 IFS='|' tokens=( $result )
@@ -109,14 +110,16 @@ printf "%15s %-4.0f \n" "rows:" ${tokens[5]}
 
 # make sure download avg is not empty
 if [[ ! -z "${tokens[2]}" ]]; then
-  # convert bytes to Mbps
-  download=$(echo "${tokens[2]} / 1048576" | bc -l)
+  # convert bits to Mbps
+  #download=$(echo "${tokens[2]} / 1048576" | bc -l)
+  download=$(echo "${tokens[2]} / 1000000" | bc -l)
 fi
 
-# make sure download avg is not empty
+# make sure upload avg is not empty
 if [[ ! -z "${tokens[3]}" ]]; then
-  # convert bytes to Mbps
-  upload=$(echo "${tokens[3]} / 1048576" | bc -l)
+  # convert bits to Mbps
+  #upload=$(echo "${tokens[3]} / 1048576" | bc -l)
+  upload=$(echo "${tokens[3]} / 1000000" | bc -l)
 fi
 
 echo -e "\naverage speeds:"
