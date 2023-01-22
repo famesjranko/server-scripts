@@ -26,11 +26,9 @@ container=deluge  # the docker container name
 check_network=true
 network_address=8.8.8.8
 
-# Set default mount and network state flags as false
+# Set mount, network state flags as false, amd init loop counter
 mounted=false
 networked=false
-
-# set loop counter
 loop_count=0
 
 while true; do
