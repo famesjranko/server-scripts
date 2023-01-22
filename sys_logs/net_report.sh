@@ -17,10 +17,7 @@ tries_count=0
 output=
 
 # Run the speedtest command and store the output in a variable
-#for i in {1..$MAX_RETRIES}; do
 for i in $(seq 1 $MAX_RETRIES); do
-  #echo "loop" $i
-
   # Run the speedtest command
   output=$($SPEEDTEST_CMD --csv 2>/dev/null)
 
@@ -38,12 +35,6 @@ for i in $(seq 1 $MAX_RETRIES); do
       #echo $output
       break
   fi
-
-  # Check the exit status of the speedtest command
-  #if [ $? -eq 0 ]; then
-  #  # Speedtest command ran successfully, exit the loop
-  #  break
-  #fi
 done
 
 #echo "tries_count" $tries_count
@@ -52,15 +43,8 @@ done
 # if all attempts failed, fall back to empty local_temp
 if [ $tries_count -eq $MAX_RETRIES ]
   then
-    #echo "tries_count == MAX_RETRIES"
     output="n/a"
 fi
-
-# Check the exit status of the speedtest command
-#if [ $? -ne 0 ]; then
-#  # Speedtest command failed after $MAX_RETRIES tries, exit with non-zero exit status
-#  exit 1
-#fi
 
 # Print the output of the speedtest command to the console
 echo "\"$(date '+%R %x')\"," $output
@@ -77,9 +61,6 @@ DATABASE_TABLE=net_log
 if [[ $output != "n/a" ]]; then
     # Create the logs directory if it doesn't exist
     mkdir -p /home/sys_logs/logs
-
-    # Create speedtest_log table
-    #sqlite3 $DATABASE_FILE "CREATE TABLE IF NOT EXISTS $DATABASE_TABLE (datetime TEXT, server_id INTEGER, sponsor TEXT, server_name TEXT, distance REAL, ping REAL, download REAL, upload REAL, share REAL, ip_address TEXT);"
 
     # Create net_log table
     sqlite3 $DATABASE_FILE \
@@ -100,11 +81,6 @@ if [[ $output != "n/a" ]]; then
     # Reorder the values in the array
     output_array=("${array[3]}" "${array[0]}" "${array[1]}" "${array[2]}" "${array[4]}" "${array[5]}" "${array[6]}" "${array[7]}" "${array[8]}" "${array[9]}")
 
-    # Use a loop to iterate through the array and print each value
-    #for val in "${output_array[@]}"; do
-    #    echo -e $val "\n"
-    #done
-
     # Initialize an empty variable called "values"
     values=
 
@@ -119,15 +95,11 @@ if [[ $output != "n/a" ]]; then
 
     # Insert the output array into the SQLite file
     # table structure: Timestamp,Server ID,Sponsor,Server Name,Timestamp,Distance,Ping,Download,Upload,Share,IP Address
-    #sqlite3 $DATABASE_FILE "INSERT INTO $DATABASE_TABLE (datetime, server_id, sponsor, server_name, distance, ping, download, upload, share, ip_address) VALUES ($values);"
-
-    # Insert the output array into the SQLite file
-    # table structure: Timestamp,Server ID,Sponsor,Server Name,Timestamp,Distance,Ping,Download,Upload,Share,IP Address
     sqlite3 $DATABASE_FILE \
     "INSERT INTO $DATABASE_TABLE \
     (datetime, server_id, sponsor, server_name, distance, ping, download, upload, share, ip_address) \
     VALUES ($values);"
 
     # Print SQLite table
-    #sqlite3 $DATABASE_FILE "SELECT * FROM $DATABASE_TABLE;"
+    #sqlite3 $DATABASE_FILE "SELECT * FROM $DATABASE_TABLE ORDER BY datetime ASC;"
 fi
