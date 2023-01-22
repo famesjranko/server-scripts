@@ -1,5 +1,12 @@
 #!/bin/bash
 
+"""
+Script for installing/updating system docker containers/images via docker cli
+includes menu for easy selection of containers to build/rebuild
+
+docker cli arguments and related menu are hardcoded for my personal home network
+"""
+
 ## global variables
 PUID='1000'
 PGID='8675309'
