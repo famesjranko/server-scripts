@@ -29,8 +29,11 @@ network_address=8.8.8.8
 # Set default mount and network state flags as false
 mounted=false
 networked=false
+loop_count=0
 
 while true; do
+    (( loop_count++ ))
+
     # Check for the availability of the mapped drive
     #if stat $drive_mount_testfile &> /dev/null && "$mounted" == "false"; then
     if [[ "$mounted" == "false" ]]; then
@@ -65,6 +68,12 @@ while true; do
         # Start the container
         echo $(date '+%y-%m-%d %T')" ["$script_name"]: Starting "$container"..."
         docker start $container > /dev/null 2>&1
+    fi
+    
+    # exit if more than 10mins elapsed and some/all containers won't start
+    if [[ $loop_count -gt 120 ]]; then
+         echo $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after 120 loops... mounted="$mounted",networked="$networked",deluge="$(docker inspect --format='{{.State.Running}}' $container)
+        break
     fi
 
     sleep 5
