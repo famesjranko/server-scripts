@@ -1,13 +1,29 @@
 #!/bin/bash
 
-# This script is used for extracting archive files and then deleting the archive files after extraction is complete
-# It supports the following archive formats: zip and rar
-# It takes 3 arguments:
-#   - torrentid: the id of the torrent
-#   - torrentname: the name of the torrent
-#   - torrentpath: the path to the torrent directory
-# The extracted files will be in the same directory as the archive files
-# Usage: ./script.sh <torrentid> <torrentname> <torrentpath>
+"""
+This is a Deluge script for extracting archive torrent files after downloading
+has completed.  It supports the following archive formats: zip and rar.
+
+It also has the option to delete the archive files following extraction by setting
+the delete flag true
+
+It takes 3 arguments:
+  torrentid: the id of the torrent
+  torrentname: the name of the torrent
+  torrentpath: the path to the torrent directory
+
+The extracted files will be in the same directory as the archive files.
+
+Usage: ./script.sh <torrentid> <torrentname> <torrentpath>
+
+To use with Deluge, simply put the script where deluge service has access to it,
+install the Execute plugin, and set the script to be run after the desired event:
+
+Possible vents
+  1. completed <--- this
+  2. added
+  3. removed
+"""
 
 formats=(zip rar)
 commands=([zip]="unzip -u" [rar]="unrar -o- e")
