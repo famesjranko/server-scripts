@@ -16,16 +16,17 @@ The script will also check if the container is already running and
 exit the loop if it is.
 """
 
+# Set script options
 script_name="JELLYFIN STARTUP"
-
 drive_mount=/data/media
-drive_mount_testfile=/data/media/testfile
-container=jellyfin
+drive_mount_testfile=/data/media/testfile  # any empty file on the remote drive
+container=jellyfin # the docker container name
 
-# Variable to control whether to check for network connection or not
-check_network=true
+# Set network test option and ping address
+check_network=false
 network_address=8.8.8.8
 
+# Set default mount and network state flags as false
 mounted=false
 networked=false
 
