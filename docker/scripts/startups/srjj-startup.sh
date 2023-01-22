@@ -15,9 +15,6 @@ radarr=$(docker inspect --format='{{.State.Running}}' $container3)
 sonarr=$(docker inspect --format='{{.State.Running}}' $container4)
 jellyseerr=$(docker inspect --format='{{.State.Running}}' $container5)
 
-loop_count=0
-deluge_up=false
-
 # check for already running containers
 if [[ "$jackett" == "true" ]]; then
     echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container2" already up!"
@@ -34,6 +31,10 @@ fi
 if [[ "$jellyseerr" == "true" ]]; then
     echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container5" already up!"
 fi
+
+# set loop counter, and single print flag for deluge container
+loop_count=0
+deluge_up=false
 
 while true; do
     (( loop_count++ ))
