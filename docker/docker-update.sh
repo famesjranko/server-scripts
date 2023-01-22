@@ -242,7 +242,7 @@ EOF
     -p 60401:60401/udp \
     -v /home/docker/deluge/config:/config \
     -v /data/torrents:/data/torrents \
-    --restart unless-stopped \
+    --restart=no \
     lscr.io/linuxserver/deluge:latest
 
   echo
@@ -291,7 +291,7 @@ EOF
     -p 9117:9117 \
     -v /home/docker/jackett/config:/config \
     -v /data/torrents/jackett:/downloads \
-    --restart unless-stopped \
+    --restart=on-failure:5 \
     linuxserver/jackett
 
   echo
@@ -351,7 +351,7 @@ EOF
     -v /home/docker/jellyfin/transcode:/transcode \
     --device /dev/dri/renderD128:/dev/dri/renderD128 \
     --device /dev/dri/card0:/dev/dri/card0 \
-    --restart unless-stopped \
+    --restart=on-failure:5 \
     linuxserver/jellyfin
 
   echo
@@ -399,7 +399,7 @@ EOF
     -e TZ=$TZ \
     -p 5055:5055 \
     -v /home/docker/jellyseerr/config:/app/config \
-    --restart unless-stopped \
+    --restart=no \
     fallenbagel/jellyseerr:latest
 
   echo
@@ -570,7 +570,7 @@ EOF
     -p 7878:7878 \
     -v /home/docker/radarr/config:/config \
     -v /data:/data \
-    --restart unless-stopped \
+    --restart=on-failure:5 \
     linuxserver/radarr
 
   echo
@@ -620,7 +620,7 @@ EOF
     -p 8989:8989 \
     -v /home/docker/sonarr/config:/config \
     -v /data:/data \
-    --restart unless-stopped \
+    --restart=on-failure:5 \
     linuxserver/sonarr
 
   echo -n "symlink sonarr torrent directory to /downloads ...  "
@@ -690,6 +690,7 @@ EOF
   clear
 }
 
+## currently not in use; using Deluge.
 qbittorrent() {
   clear
   header
