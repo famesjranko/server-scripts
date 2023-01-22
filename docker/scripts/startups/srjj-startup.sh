@@ -1,5 +1,18 @@
 #!/bin/bash
 
+"""
+This script is used to start a set of containers in a specific
+order and only when certain conditions are met.
+
+The script will loop indefinitely until the deluge container
+is running. Once the deluge container is running, it will start
+the jackett, radarr, sonarr and jellyseerr containers.
+
+If any of the jackett, radarr, sonarr and jellyseerr containers
+are already running when the script is started, it will log that
+they are already running and skip starting them.
+"""
+
 script_name="S-R-J-J STARTUP"
 
 # set container names
