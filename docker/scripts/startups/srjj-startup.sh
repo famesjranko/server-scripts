@@ -9,6 +9,7 @@ container3=radarr
 container4=sonarr
 container5=jellyseerr
 
+# get current run state of containers
 deluge=$(docker inspect --format='{{.State.Running}}' $container1)
 jackett=$(docker inspect --format='{{.State.Running}}' $container2)
 radarr=$(docker inspect --format='{{.State.Running}}' $container3)
@@ -32,14 +33,14 @@ if [[ "$jellyseerr" == "true" ]]; then
     echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container5" already up!"
 fi
 
-# set loop counter, and single print flag for deluge container
-loop_count=0
+# set single print flag for deluge, amd init loop counter
 deluge_up=false
+loop_count=0
 
 while true; do
     (( loop_count++ ))
 
-    # check all container states on each loop
+    # recheck all container states on each loop
     deluge=$(docker inspect --format='{{.State.Running}}' $container1)
     jackett=$(docker inspect --format='{{.State.Running}}' $container2)
     radarr=$(docker inspect --format='{{.State.Running}}' $container3)
@@ -49,13 +50,13 @@ while true; do
     # start jackett radarr sonarr and jellyseer if deluge is running
     # if deluge is running, that means torrent mapped drive and network are up!
     if [[ "$deluge" == "true" ]]; then
-
+    
         # log deluge container running status
         if [[ "$deluge_up" == "false" ]]; then
             #echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container1" is running!"
             deluge_up=true
         fi
-
+        
         ## JACKET CONTAINER START SECTION
         if [[ "$jackett" == "false" ]]; then
             docker start $container2 >& /dev/null
@@ -103,7 +104,6 @@ while true; do
         else
             echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container5" started successfully!"
         fi
-
     else
         echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container1" is not running yet..."
     fi
