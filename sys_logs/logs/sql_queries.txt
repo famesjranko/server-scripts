@@ -1,0 +1,53 @@
+## to get the colomn info of a table
+sqlite3 logs/system.db "PRAGMA table_info(net_log)"
+
+## to completely delete a table, incl columns, etc
+sqlite3 logs/system.db "DROP TABLE net_log;"
+
+## to empty a table of all data, all rows
+sqlite3 logs/system.db "DELETE FROM net_log;"
+
+## to get all from a table and order by ASC/DESC
+sqlite3 system.db "SELECT * FROM net_log ORDER BY datetime ASC;"
+
+# to get all from a table, order by ASC/DESC and limit to 13 rows
+sqlite3 system.db "SELECT * FROM net_log ORDER BY datetime DESC LIMIT 13;"
+
+## get the average of download, upload, ping, between two days (includings edge days)
+sqlite3 logs/system.db "SELECT AVG(download) AS avg_download, \
+AVG(upload) AS avg_upload, \
+AVG(ping) AS avg_ping, \
+COUNT(*) AS record_count \
+FROM net_log \
+WHERE date(datetime) BETWEEN '2023-01-17' AND '2023-01-18';"
+
+## get the average of download, upload, ping, between two days (excluding edge days)
+sqlite3 logs/system.db "SELECT AVG(download) AS avg_download, \
+AVG(upload) AS avg_upload, \
+AVG(ping) AS avg_ping, \
+COUNT(*) AS record_count \
+FROM net_log \
+WHERE date(datetime) > '2023-01-17' AND date(datetime) <= '2023-01-18'"
+
+## example of using sqlite results in script
+#!/bin/bash
+
+start_date="2023-01-17"
+end_date="2023-01-18"
+
+result=$(sqlite3 logs/system.db "SELECT AVG(download) AS avg_download, \
+AVG(upload) AS avg_upload, \
+AVG(ping) AS avg_ping, \
+COUNT(*) AS record_count \
+FROM net_log \
+WHERE date(datetime) BETWEEN '$start_date' AND '$end_date'")
+
+avg_download=$(echo $result | awk '{print $1}')
+avg_upload=$(echo $result | awk '{print $2}')
+avg_ping=$(echo $result | awk '{print $3}')
+record_count=$(echo $result | awk '{print $4}')
+
+echo "average download: $avg_download"
+echo "average upload: $avg_upload"
+echo "average ping: $avg_ping"
+echo "record count: $record_count"
