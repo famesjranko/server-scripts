@@ -26,7 +26,7 @@ container=jellyfin # the docker container name
 check_network=false
 network_address=8.8.8.8
 
-# Set default mount and network state flags as false
+# Set mount, network state flags, amd init loop counter
 mounted=false
 networked=false
 loop_count=0
