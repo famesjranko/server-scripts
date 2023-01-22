@@ -16,16 +16,17 @@ The script will also check if the container is already running and
 exit the loop if it is.
 """
 
+# Set script options
 script_name="DELUGE STARTUP"
-
 drive_mount=/data/torrents/
-drive_mount_testfile=/data/torrents/testfile
-container=deluge
+drive_mount_testfile=/data/torrents/testfile  # any empty file on the remote drive
+container=deluge  # the docker container name
 
-# Variable to control whether to check for network connection or not
+# Set network test option and ping address
 check_network=true
 network_address=8.8.8.8
 
+# Set default mount and network state flags as false
 mounted=false
 networked=false
 
