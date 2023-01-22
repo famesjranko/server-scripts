@@ -14,7 +14,6 @@ IFS=' ' tokens=( $result )
 
 # Define default values for start_date and end_date
 start_date="${tokens[0]}"  #"2022-01-18"
-#end_date="$(date +%F)"  # todays date
 end_date="$(date -d "$(date +%F) + 1 day" +%F)" #tomorrows date
 
 # parse options
@@ -59,26 +58,22 @@ fi
 
 # query average temp data from database
 result=$(sqlite3 $DATABASE_FILE \
-"SELECT MIN(datetime) AS min_date, \
-MAX(datetime) AS max_date, \
-AVG(local_temp) AS avg_local, \
-AVG(cpu_temp) AS avg_cpu, \
-AVG(cpu_delta) AS avg_cpu_delta, \
-AVG(gpu_temp) AS avg_gpu, \
-AVG(gpu_delta) AS avg_gpu_delta, \
-COUNT(*) AS record_count \
+"SELECT MIN(datetime), \
+MAX(datetime), \
+AVG(local_temp), \
+AVG(cpu_temp), \
+AVG(cpu_delta), \
+AVG(gpu_temp), \
+AVG(gpu_delta), \
+COUNT(*) \
 FROM $DATABASE_TABLE \
 WHERE date(datetime) BETWEEN '$start_date' AND '$end_date'")
 
 # tokenise query result
 IFS='|' tokens=( $result )
 
-#cmd="SELECT * FROM $DATABASE_TABLE"
-#IFS=$'\n'
-#fqry=(`sqlite3 $DATABASE_FILE "$cmd"`)
-
-#for f in "${fqry[@]}"; do
-#    echo "$f"
+#for f in "${tokens[@]}"; do
+#  echo "$f"
 #done
 
 # check if min date was in query
@@ -103,13 +98,13 @@ fi
 echo -e "AVERAGE LOCAL/CPU/GPU TEMPERATURES:\n"
 
 echo -e "records info:"
-printf "%15s %s \n" "start date:" "$start_date"   #"${tokens[0]}"
-printf "%15s %s \n" "end date:" "$end_date"       #"${tokens[1]}"
-printf "%15s %-4.0f \n" "rows:" ${tokens[7]}
+printf "%15s %s \n"      "start date:" "$start_date"
+printf "%15s %s \n"      "end date:"   "$end_date" 
+printf "%15s %-4.0f \n"  "rows:"        ${tokens[7]}
 
 echo -e "\naverage temps:"
-printf "%15s %-4.1f'C \n\n" "local:" ${tokens[2]}
-printf "%15s %-4.1f'C \n" "cpu:" ${tokens[3]}
-printf "%15s %-4.1f'C \n\n" "cpu delta:" ${tokens[4]}
-printf "%15s %-4.1f'C \n" "gpu:" ${tokens[5]}
-printf "%15s %-4.1f'C \n" "gpu delta:" ${tokens[6]}
+printf "%15s %-4.1f'C \n\n" "local:"      ${tokens[2]}
+printf "%15s %-4.1f'C \n"    "cpu:"       ${tokens[3]}
+printf "%15s %-4.1f'C \n\n"  "cpu delta:" ${tokens[4]}
+printf "%15s %-4.1f'C \n"    "gpu:"       ${tokens[5]}
+printf "%15s %-4.1f'C \n"    "gpu delta:" ${tokens[6]}
