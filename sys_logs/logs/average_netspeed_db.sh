@@ -47,7 +47,7 @@ if [[ $(date -d "$start_date") < $(date -d "$end_date") ]]; then
   exit 1
 fi
 
-## temp_log columns
+## net_log columns
 # 0|datetime|DATETIME|0||0
 # 1|server_id|INTEGER|0||0
 # 2|sponsor|TEXT|0||0
@@ -111,14 +111,12 @@ printf "%15s %-4.0f \n" "rows:" ${tokens[5]}
 # make sure download avg is not empty
 if [[ ! -z "${tokens[2]}" ]]; then
   # convert bits to Mbps
-  #download=$(echo "${tokens[2]} / 1048576" | bc -l)
   download=$(echo "${tokens[2]} / 1000000" | bc -l)
 fi
 
 # make sure upload avg is not empty
 if [[ ! -z "${tokens[3]}" ]]; then
   # convert bits to Mbps
-  #upload=$(echo "${tokens[3]} / 1048576" | bc -l)
   upload=$(echo "${tokens[3]} / 1000000" | bc -l)
 fi
 
