@@ -1,11 +1,16 @@
 #!/bin/sh
 
-## ================================
-#  this is a simple script that
-#  prints gpu temp, cpu temp, local temp, and deltas
+## ===================================================
+#  this is a simple script that collected gpu temp,
+#  cpu temp, local temp, and related delta temps, 
+#  prints them to console for logging and stores them
+#  in an SQLite database for future reference. 
 #
-#  REQUIRES: curl to collect local weather data
-## ================================
+#  REQUIRES: 1. 'curl' to collect local weather data
+#            2. 'nvidia-smi' for nvidia gpu temp data
+#            3. 'sensors' for cpu temp data
+#            4. 'sqlite3' for database
+## ===================================================
 
 # Get system date
 DATE=$(date "+%D - %T")
@@ -29,8 +34,6 @@ tries_count=0
 
 #for i in {1..$MAX_RETRIES}; do
 for i in $(seq 1 $MAX_RETRIES); do
-  #echo "loop" $i
-
   # Get local temp
   request=$(curl -s wttr.in/"$LOCATION"?format=%t)
 
