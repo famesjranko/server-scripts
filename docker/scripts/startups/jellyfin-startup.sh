@@ -1,32 +1,36 @@
 /bash
 
-## ====================================================================
+## =====================================================================
 ## DOCKER CONTAINER WAIT FOR NETWORK/MOUNT POINT START SCRIPT
 ##
 ## This script is used to check for the availability of a mapped drive
-## and network connection before starting a deluge container.
+## and network connection before starting docker container.
 ##
-## The script will loop indefinitely until the drive and network are
-## available, at which point it will start the deluge container.
+## The script will run until either the drive and network are available,
+## at which point it will start the container, or the loop limit is
+## reached.
 ##
 ## The drive and network availability is determined by the stat command
 ## and ping command, respectively.
 ##
 ## The script will also check if the container is already running and
 ## exit the loop if it is.
-## ====================================================================
+## =====================================================================
 
-# Set script options
 script_name="JELLYFIN STARTUP"
+
+# set mount point and testfile
 drive_mount=/data/media
 drive_mount_testfile=/data/media/testfile  # any empty file on the remote drive
-container=jellyfin # the docker container name
+container=jellyfin
 
 # Set network test option and ping address
 check_network=false
 network_address=8.8.8.8
 
-# Set mount, network state flags, amd init loop counter
+# Set max loop iterations (60x10secs=~10mins)
+loop_limit=60
+
 mounted=false
 networked=false
 loop_count=0
@@ -35,7 +39,6 @@ while true; do
     (( loop_count++ ))
 
     # Check for the availability of the mapped drive
-    #if stat $drive_mount_testfile &> /dev/null && "$mounted" == "false"; then
     if [[ "$mounted" == "false" ]]; then
         stat $drive_mount_testfile &> /dev/null
         if [[ $? -eq 0 ]]; then
@@ -71,10 +74,10 @@ while true; do
     fi
     
     # exit if more than 10mins elapsed and some/all containers won't start
-    if [[ $loop_count -gt 120 ]]; then
-         echo $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after 120 loops... mounted="$mounted",networked="$networked",deluge="$(docker inspect --format='{{.State.Running}}' $container)
+    if [[ $loop_count -gt $loop_limit ]]; then
+         echo $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after hitting loop limit... mounted="$mounted",networked="$networked",deluge="$(docker inspect --format='{{.State.Running}}' $container)
         break
     fi
 
-    sleep 5
+    sleep 10
 done
