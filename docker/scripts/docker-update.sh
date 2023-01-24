@@ -1,25 +1,41 @@
 #!/bin/bash
 
-"""
-Script for installing/updating system docker containers/images via docker cli
-includes menu for easy selection of containers to build/rebuild
-
-docker cli arguments and related menu are hardcoded for my personal home network
-"""
-
 ## global variables
 PUID='1000'
 PGID='8675309'
 TZ='Australia/Melbourne'
 PAUSE=0
 
+declare -A options=(
+  ["1"]="bazarr"
+  ["2"]="bitwarden"
+  ["3"]="jackett"
+  ["4"]="jellyfin"
+  ["5"]="portainer"
+  ["6"]="qbittorrent"
+  ["7"]="radarr"
+  ["8"]="sonarr"
+  ["9"]="omada"
+  ["10"]="tmm"
+  ["11"]="jellyseerr"
+  ["12"]="deluge"
+  ["13"]="rutorrent"
+  ["U"]="update_group"
+  ["u"]="update_group"
+  ["D"]="dir_struct"
+  ["d"]="dir_struct"
+)
+
+# Create array of default containers
+default_group=("bitwarden" "jackett" "jellyfin" "jellyseerr" "radarr" "sonarr" "omada")
+
 header() {
   sleep .3
   cat<< "EOF"
 
-====================================
- Docker Update/Install Script [sdb1]
-====================================
+==============================
+ Docker Update/Install Script
+==============================
 
 EOF
 }
@@ -40,9 +56,10 @@ dir_struct() {
 		   | - /tv
 
   Permissions:
-	 User: dorothy/1000
-	Group: media/8675309
+	 User: dorothy [1000]
+	Group: media   [8675309]
 
+  Timezone: Australia/Melbourne
 EOF
 
   pause
@@ -51,28 +68,14 @@ EOF
 
 menu() {
   header
-  cat<< "EOF"
-   ( 1) update Bazarr
-   ( 2) update Bitwarden
-   ( 3) update Jackett
-   ( 4) update Jellyfin
-   ( 5) update Portainer
-   ( 6) update Qbittorrent
-   ( 7) update Radarr
-   ( 8) update Sonarr
-   ( 9) update Omada-Controller
-   (10) update TinyMediaManager
-   (11) update Jellyseerr
-   (12) update Deluge
-
-    (u) update all standard containers:
-	{Bitwarden, Jackett, Jellyfin, Portainer, qBittorrent, Deluge, Radarr, Sonarr, Omada}
-
-    (d) show dir structure
-
-    (q)uit
-
-EOF
+  for i in $(echo ${!options[@]} | tr " " "\n" | sort -n); do
+    if [ $i -eq $i 2> /dev/null ]; then
+      printf " (%2s) update %s\n" "$i" "${options[$i]}"
+    fi
+  done
+  echo -e "\n  (u) update all standard containers: {$(IFS=","; echo "${default_group[*]}")}"
+  echo -e "\n  (d) show directory structure"
+  echo -e "\n  (q) quit\n"
 }
 
 final_print() {
@@ -106,22 +109,26 @@ header
 ==================
 EOF
 
-  echo -n "stopping bazarr container..."
-  bzoutput=$(docker stop bazarr)
-  if [ "$bzoutput" == "bazarr" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove bazarr container..."
-  bzoutput=$(docker rm bazarr)
-  if [ "$bzoutput" == "bazarr" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="bazarr"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest bazarr image..."
@@ -157,22 +164,26 @@ bitwarden() {
 =====================
 EOF
 
-  echo -n "stopping bitwarden container..."
-  bwoutput=$(docker stop bitwarden)
-  if [ "$bwoutput" == "bitwarden" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove bitwarden container..."
-  bwoutput=$(docker rm bitwarden)
-  if [ "$bwoutput" == "bitwarden" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="bitwarden"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest bitwarden image..."
@@ -183,7 +194,7 @@ EOF
     --name=bitwarden \
     -e TZ=$TZ \
     -u 1000:1000 \
-    -e ADMIN_TOKEN=I9/NMemIyydtjEr2Nz0YgoYvf74fbdosFvls6O1UPdsXR9IwRDKxX5bDUa5DuaQz \
+    -e ADMIN_TOKEN= [.........] \
     -e LOG_LEVEL=error \
     -e EXTENDED_LOGGING=true \
     -e LOG_FILE=/data/bitwarden.log \
@@ -215,22 +226,26 @@ deluge() {
 =====================
 EOF
 
-  echo -n "stopping deluge container..."
-  dloutput=$(docker stop deluge)
-  if [ "$dloutput" == "deluge" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove deluge container..."
-  dloutput=$(docker rm deluge)
-  if [ "$dloutput" == "deluge" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="deluge"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest deluge image..."
@@ -268,22 +283,26 @@ jackett() {
 ===================
 EOF
 
-  echo -n "stopping jackett container..."
-  joutput=$(docker stop jackett)
-  if [ "$joutput" == "jackett" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove jackett container..."
-  joutput=$(docker rm jackett)
-  if [ "$joutput" == "jackett" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="jackett"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest jackett image..."
@@ -317,22 +336,26 @@ jellyfin() {
 ====================
 EOF
 
-  echo -n "stopping jellyfin container..."
-  jfoutput=$(docker stop jellyfin)
-  if [ "$jfoutput" == "jellyfin" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove jellyfin container..."
-  jfoutput=$(docker rm jellyfin)
-  if [ "$jfoutput" == "jellyfin" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="jellyfin"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest jellyfin image..."
@@ -372,27 +395,31 @@ jellyseerr() {
   header
 
   cat<< "EOF"
-====================
+======================
  Updating: Jellyseerr
-====================
+======================
 EOF
 
-  echo -n "stopping jellyseerr container..."
-  jfsoutput=$(docker stop jellyseerr)
-  if [ "$jfsoutput" == "jellyseerr" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove jellyseerr container..."
-  jfsoutput=$(docker rm jellyseerr)
-  if [ "$jfsoutput" == "jellyseerr" ]
-    then
-      echo -e "\t\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="jellyseerr"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest jellyseerr image..."
@@ -425,22 +452,26 @@ omada() {
 ============================
 EOF
 
-  echo -n "stopping omada-controller container..."
-  omoutput=$(docker stop omada-controller)
-  if [ "$omoutput" == "omada-controller" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove omada-controller container..."
-  omoutput=$(docker rm omada-controller)
-  if [ "$omoutput" == "omada-controller" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="omada-controller"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest omada-controller image..."
@@ -496,22 +527,26 @@ portainer() {
 =====================
 EOF
 
-  echo -n "stopping portainer container..."
-  poutput=$(docker stop portainer)
-  if [ "$poutput" == "portainer" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove portainer container..."
-  poutput=$(docker rm portainer)
-  if [ "$poutput" == "portainer" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="portainer"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest portainer image..."
@@ -546,22 +581,26 @@ radarr() {
 ==================
 EOF
 
-  echo -n "stopping radarr container..."
-  routput=$(docker stop radarr)
-  if [ "$routput" == "radarr" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove radarr container..."
-  routput=$(docker rm radarr)
-  if [ "$routput" == "radarr" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="radarr"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest radarr image..."
@@ -586,6 +625,60 @@ EOF
   clear
 }
 
+rutorrent () {
+  clear
+  header
+
+ cat<< "EOF"
+=====================
+ Updating: RuTorrent
+=====================
+EOF
+
+  container_name="rutorrent"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
+  fi
+
+  echo "pull latest rutorrent image..."
+  docker pull romancin/rutorrent
+
+  docker run -d \
+    --name=rutorrent \
+    -e PUID=$PUID \
+    -e PGID=$PGID \
+    -e TZ=$TZ \
+    -e UMASK_SET=022 \
+    -p 8113:80 \
+    -p 60402-60402:60402-60402 \
+    -v /home/docker/rutorrent/config:/config \
+    -v /data/torrents:/data/torrents \
+    --restart no \
+    romancin/rutorrent:latest
+
+  echo
+  echo "finished."
+  pause
+  clear
+}
+
 sonarr() {
   clear
   header
@@ -596,22 +689,26 @@ sonarr() {
 ==================
 EOF
 
-  echo -n "stopping sonarr container..."
-  soutput=$(docker stop sonarr)
-  if [ "$soutput" == "sonarr" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove sonarr container..."
-  soutput=$(docker rm sonarr)
-  if [ "$soutput" == "sonarr" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="sonarr"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest sonarr image..."
@@ -656,22 +753,26 @@ tmm() {
 ============================
 EOF
 
-  echo -n "stopping tinymediamanager container..."
-  tmoutput=$(docker stop tmm)
-  if [ "$tmoutput" == "tmm" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove tinymediamanager container..."
-  tmoutput=$(docker rm tmm)
-  if [ "$tmoutput" == "tmm" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
+  container_name="tmm"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest tinymediamanager image..."
@@ -707,22 +808,26 @@ qbittorrent() {
 =======================
 EOF
 
-  echo -n "stopping qbittorrent container..."
-  qboutput=$(docker stop qbittorrent)
-  if [ "$qboutput" == "qbittorrent" ]
-    then
-      echo -e "\t [ SUCCES ]"
-    else
-      echo -e "\t [  FAIL  ]"
-  fi
-
-  echo -n "remove qbittorrent container..."
-  qboutput=$(docker rm qbittorrent)
-  if [ "$qboutput" == "qbittorrent" ]
-    then
-      echo -e "\t\t [ SUCCES ]"
-    else
-      echo -e "\t\t [  FAIL  ]"
+  container_name="qbittorrent"
+  container_id=$(docker ps -a -q --filter name=$container_name)
+  
+  if [ ! -z "$container_id" ]; then
+      echo -n "stopping $container_name container... "
+      output=$(docker stop $container_name)
+      if [ "$output" == "$container_name" ]; then
+          echo -e "\t [ SUCCESS ]"
+          echo -n "removing $container_name container... "
+          output=$(docker rm $container_name)
+          if [ "$output" == "$container_name" ]; then
+              echo -e "\t [ SUCCESS ]"
+          else
+              echo -e "\t [ FAIL ] $output"
+          fi
+      else
+          echo -e "\t [ FAIL ] $output"
+      fi
+  else
+      echo -e "\t container not present"
   fi
 
   echo "pull latest qbittorrent image..."
@@ -756,52 +861,35 @@ EOF
   clear
 }
 
-update_all() {
-  # turn user request to continue off
-  PAUSE=0
+update_group() {
+  # Turn user request to continue off
+  #PAUSE=0
 
-  # call update functions
-  bitwarden
-  deluge
-  jackett
-  jellyfin
-  jellyseerr
-  portainer
-  qbittorrent
-  radarr
-  sonarr
-  omada
+  # Loop through and call each function
+  for i in "${default_group[@]}"; do
+    $i
+  done
 
-  # turn user request to continue back on
-  PAUSE=1
+  # Turn user request to continue back on
+  #PAUSE=1
 }
 
 main() {
   menu
   while :
   do
-    read -r -p "Please enter your choice: "
-    case "$REPLY" in
-    "1" )  bazarr;      menu ;;
-    "2" )  bitwarden;   menu ;;
-    "3" )  jackett;     menu ;;
-    "4" )  jellyfin;    menu ;;
-    "5" )  portainer;   menu ;;
-    "6" )  qbittorrent; menu ;;
-    "7" )  radarr;      menu ;;
-    "8" )  sonarr;      menu ;;
-    "9" )  omada;       menu ;;
-    "10")  tmm;         menu ;;
-    "11")  jellyseerr;  menu ;;
-    "12")  deluge;      menu ;;
-    "U" )  update_all;  menu ;;
-    "u" )  update_all;  menu ;;
-    "D" )  dir_struct;  menu ;;
-    "d" )  dir_struct;  menu ;;
-    "Q" )  final_print; break ;;
-    "q" )  final_print; break ;;
-     *  )  echo; echo "invalid option, try again..." ;;
-    esac
+    read -r -p "Please enter your choice: " choice
+    if [ "${options[$choice]}" != "" ]; then
+        "${options[$choice]}";
+        menu
+    else
+        case "$choice" in
+        "U"|"u")  update_group; menu ;;
+        "D"|"d")  dir_struct;   menu ;;
+        "Q"|"q")  final_print;  break ;;
+        *) echo "Invalid option, try again..." ;;
+        esac
+    fi
   done
   exit
 }
@@ -809,3 +897,4 @@ main() {
 ## execute main
 clear
 main
+
