@@ -1,77 +1,93 @@
 #!/bin/bash
 
-"""
-This script is used to start a set of containers in a specific
-order and only when certain conditions are met.
-
-The script will loop indefinitely until the deluge container
-is running. Once the deluge container is running, it will start
-the jackett, radarr, sonarr and jellyseerr containers.
-
-If any of the jackett, radarr, sonarr and jellyseerr containers
-are already running when the script is started, it will log that
-they are already running and skip starting them.
-"""
+## =================================================================
+## DOCKER CONTAINER GROUP WAIT FOR REQUIRED CONTAINER START SCRIPT
+## 
+## This script is used to start a set of containers in a specific
+## order and only when certain conditions are met.
+##
+## The script will loop indefinitely until the deluge container
+## is running. Once the deluge container is running, it will start
+## the jackett, radarr, sonarr and jellyseerr containers.
+## 
+## If any of the jackett, radarr, sonarr and jellyseerr containers
+## are already running when the script is started, it will log that
+## they are already running and skip starting them.
+## =================================================================
 
 script_name="S-R-J-J STARTUP"
 
-# set container names
-container1=deluge
-container2=jackett
-container3=radarr
-container4=sonarr
-container5=jellyseerr
+# required container before starting group
+required=rutorrent #deluge
 
-# get current run state of containers
-deluge=$(docker inspect --format='{{.State.Running}}' $container1)
-jackett=$(docker inspect --format='{{.State.Running}}' $container2)
-radarr=$(docker inspect --format='{{.State.Running}}' $container3)
-sonarr=$(docker inspect --format='{{.State.Running}}' $container4)
-jellyseerr=$(docker inspect --format='{{.State.Running}}' $container5)
+# container start group
+container1=jackett
+container2=radarr
+container3=sonarr
+container4=jellyseerr
+
+# set initial container states
+required_state=$(docker inspect --format='{{.State.Running}}' $required)
+container1_state=$(docker inspect --format='{{.State.Running}}' $container1)
+container2_state=$(docker inspect --format='{{.State.Running}}' $container2)
+container3_state=$(docker inspect --format='{{.State.Running}}' $container3)
+container4_state=$(docker inspect --format='{{.State.Running}}' $container4)
 
 # check for already running containers
-if [[ "$jackett" == "true" ]]; then
+if [[ "$container1_state" == "true" ]]; then
+    echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container1" already up!"
+fi
+
+if [[ "$container2_state" == "true" ]]; then
     echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container2" already up!"
 fi
 
-if [[ "$radarr" == "true" ]]; then
+if [[ "$container3_state" == "true" ]]; then
     echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container3" already up!"
 fi
 
-if [[ "$sonarr" == "true" ]]; then
+if [[ "$container4_state" == "true" ]]; then
     echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container4" already up!"
 fi
 
-if [[ "$jellyseerr" == "true" ]]; then
-    echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container5" already up!"
-fi
-
-# set single print flag for deluge, amd init loop counter
-deluge_up=false
+# init loop counter and echo flag
 loop_count=0
+required_state_up=false
 
 while true; do
     (( loop_count++ ))
 
-    # recheck all container states on each loop
-    deluge=$(docker inspect --format='{{.State.Running}}' $container1)
-    jackett=$(docker inspect --format='{{.State.Running}}' $container2)
-    radarr=$(docker inspect --format='{{.State.Running}}' $container3)
-    sonarr=$(docker inspect --format='{{.State.Running}}' $container4)
-    jellyseerr=$(docker inspect --format='{{.State.Running}}' $container5)
+    # check all container states on each loop
+    required_state=$(docker inspect --format='{{.State.Running}}' $required)
+    container1_state=$(docker inspect --format='{{.State.Running}}' $container1)
+    container2_state=$(docker inspect --format='{{.State.Running}}' $container2)
+    container3_state=$(docker inspect --format='{{.State.Running}}' $container3)
+    container4_state=$(docker inspect --format='{{.State.Running}}' $container4)
 
-    # start jackett radarr sonarr and jellyseer if deluge is running
-    # if deluge is running, that means torrent mapped drive and network are up!
-    if [[ "$deluge" == "true" ]]; then
-    
-        # log deluge container running status
-        if [[ "$deluge_up" == "false" ]]; then
-            #echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container1" is running!"
-            deluge_up=true
+    # start container1 container2 container3 and container4 if required is running
+    # if required container is running, that means torrent mapped drive and network are up!
+    if [[ "$required_state" == "true" ]]; then
+
+        # log required container running status
+        if [[ "$required_state_up" == "false" ]]; then
+            echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$required" is running!"
+            required_state_up=true
         fi
-        
-        ## JACKET CONTAINER START SECTION
-        if [[ "$jackett" == "false" ]]; then
+
+        ## CONTAINER1 START SECTION
+        if [[ "$container1_state" == "false" ]]; then
+            docker start $container1 >& /dev/null
+            if [[ $? -eq 0 ]]; then
+                echo $(date +"%y-%m-%d %T")" ["$script_name"]: Starting "$container1"..."
+            else
+                echo $(date +"%y-%m-%d %T")" ["$script_name"]: Error starting "$container1"! Will try again..."
+            fi
+        else
+            echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container1" started successfully!"
+        fi
+
+        ## CONTAINER2 START SECTION
+        if [[ "$container2_state" == "false" ]]; then
             docker start $container2 >& /dev/null
             if [[ $? -eq 0 ]]; then
                 echo $(date +"%y-%m-%d %T")" ["$script_name"]: Starting "$container2"..."
@@ -82,8 +98,8 @@ while true; do
             echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container2" started successfully!"
         fi
 
-        ## RADARR CONTAINER START SECTION
-        if [[ "$radarr" == "false" ]]; then
+        ## CONTAINER3 START SECTION
+        if [[ "$container3_state" == "false" ]]; then
             docker start $container3 >& /dev/null
             if [[ $? -eq 0 ]]; then
                 echo $(date +"%y-%m-%d %T")" ["$script_name"]: Starting "$container3"..."
@@ -94,8 +110,8 @@ while true; do
             echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container3" started successfully!"
         fi
 
-        ## SONARR CONTAINER START SECTION
-        if [[ "$sonarr" == "false" ]]; then
+        ## CONTAINER4 START SECTION
+        if [[ "$container4_state" == "false" ]]; then
             docker start $container4 >& /dev/null
             if [[ $? -eq 0 ]]; then
                 echo $(date +"%y-%m-%d %T")" ["$script_name"]: Starting "$container4"..."
@@ -106,32 +122,22 @@ while true; do
             echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container4" started successfully!"
         fi
 
-        ## JELLYSEERR CONTAINER START SECTION
-        if [[ "$jellyseerr" == "false" ]]; then
-            docker start $container5 >& /dev/null
-            if [[ $? -eq 0 ]]; then
-                echo $(date +"%y-%m-%d %T")" ["$script_name"]: Starting "$container5"..."
-            else
-                echo $(date +"%y-%m-%d %T")" ["$script_name"]: Error starting "$container5"! Will try again..."
-            fi
-        else
-            echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container5" started successfully!"
-        fi
     else
-        echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$container1" is not running yet..."
+        echo $(date +"%y-%m-%d %T")" ["$script_name"]: "$required" is not running yet..."
     fi
 
     # exit if all containers are up
-    if [[ "$jackett" == "true" && "$radarr" == "true" && "$sonarr" == "true" && "$jellyseerr" == "true" ]]; then
+    if [[ "$container1_state" == "true" && "$container2_state" == "true" && "$container3_state" == "true" && "$container4_state" == "true" ]]; then
         echo $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting... All containers up!"
         break
     fi
 
     # exit if more than 10mins elapsed and some/all containers won't start
     if [[ $loop_count -gt 60 ]]; then
-         echo $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after 60 loops... sonarr="$sonarr",radarr="$radarr",jackett="$jackett",jellyseerr="$jellyseerr
+         echo $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after 60 loops... "$container1"="$container3_state","$container2"="$container2_state","$container3"="$container3_state","$container4"="$container4_state
         break
     fi
 
     sleep 10
 done
+
