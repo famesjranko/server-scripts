@@ -38,8 +38,6 @@ delete=false
 # Init extracted bool as false (empty)
 extracted=
 
-#extracted_type=""
-
 log()
 {
     logger -t deluge-extractarchives "$@"
@@ -63,7 +61,6 @@ for format in "${formats[@]}"; do
         if ${commands[$format]} "$file";
             then
                 extracted=true
-                #extracted_type=".${format}"
             else
                 log "Extraction failed for file $file"
                 extracted=
@@ -82,9 +79,3 @@ if [[ "$extracted" && "$delete" == "true" ]] ; then
     done
     ' sh {} +
 fi
-
-#if [[ "$extracted" ]] ; then
-#    # Iterate through the directory and delete all files ending in the extracted file type
-#    log "Deleting all files ending in $extracted_type"
-#    find "$torrentpath/$torrentname" -iname "*$extracted_type" -type f -delete
-#fi
