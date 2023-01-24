@@ -16,8 +16,6 @@ The script will also check if the container is already running and
 exit the loop if it is.
 """
 
-#!/bin/bash
-
 # Set script options
 script_name="TORRENT STARTUP"
 drive_mount=/data/torrents/
