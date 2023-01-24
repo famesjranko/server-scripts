@@ -16,11 +16,13 @@ The script will also check if the container is already running and
 exit the loop if it is.
 """
 
+#!/bin/bash
+
 # Set script options
-script_name="DELUGE STARTUP"
+script_name="TORRENT STARTUP"
 drive_mount=/data/torrents/
-drive_mount_testfile=/data/torrents/testfile  # any empty file on the remote drive
-container=deluge  # the docker container name
+drive_mount_testfile=/data/torrents/testfile
+container=rutorrent #deluge
 
 # Set network test option and ping address
 check_network=true
