@@ -1,20 +1,20 @@
 #!/bin/bash
 
-"""
-DOCKER CONTAINER WAIT FOR NETWORK/MOUNT POINT START SCRIPT
-
-This script is used to check for the availability of a mapped drive
-and network connection before starting a deluge container.
-
-The script will loop indefinitely until the drive and network are
-available, at which point it will start the deluge container.
-
-The drive and network availability is determined by the stat command
-and ping command, respectively.
-
-The script will also check if the container is already running and
-exit the loop if it is.
-"""
+## =====================================================================
+## DOCKER CONTAINER WAIT FOR NETWORK/MOUNT POINT START SCRIPT
+##
+## This script is used to check for the availability of a mapped drive
+## and network connection before starting a deluge container.
+##
+## The script will loop indefinitely until the drive and network are
+## available, at which point it will start the deluge container.
+##
+## The drive and network availability is determined by the stat command
+## and ping command, respectively.
+##
+## The script will also check if the container is already running and
+## exit the loop if it is.
+## =====================================================================
 
 # Set script options
 script_name="TORRENT STARTUP"
