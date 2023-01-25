@@ -1,4 +1,4 @@
-/bash
+#!/bin/bash
 
 ## =====================================================================
 ## DOCKER CONTAINER WAIT FOR NETWORK/MOUNT POINT START SCRIPT
