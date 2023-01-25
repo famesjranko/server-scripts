@@ -18,7 +18,7 @@ script_name="S-R-J-J STARTUP"
 required=rutorrent
 
 # set container start group
-container_group=(sonarr radarr jackett jellyseerr)
+container_group=(jackett radarr sonarr jellyseerr)
 
 # check if required container is running
 required_state=$(docker inspect --format='{{.State.Running}}' $required)
@@ -38,6 +38,9 @@ for container in ${container_group[@]}; do
         already_running[$container]=false
     fi
 done
+
+# Set max loop iterations (60x10secs=~10mins)
+loop_limit=60
 
 loop_count=0
 
@@ -95,8 +98,8 @@ while true; do
 	fi
 
 	# exit if more than 10mins elapsed and some/all container_group won't start
-	if [[ $loop_count -gt 60 ]]; then
-		echo -n $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after 60 loops... "
+	if [[ $loop_count -gt $loop_limit ]]; then
+		echo -n $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after hitting loop limit... "
 		for container in ${container_group[@]}; do
 			container_state=$(docker inspect --format='{{.State.Running}}' $container)
 			echo -n $container"="$container_state","
