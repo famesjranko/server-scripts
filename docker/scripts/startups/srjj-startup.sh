@@ -55,7 +55,6 @@ while true; do
     done
 
     # start container_group if required is running
-    # if required container is running, that means torrent mapped drive and network are up!
     if [[ "$required_state" == "true" ]]; then
 
         # log required container running status
