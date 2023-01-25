@@ -77,7 +77,10 @@ while true; do
     
     # exit if more than 10mins elapsed and some/all containers won't start
     if [[ $loop_count -gt $loop_limit  ]]; then
-         echo $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after hitting loop limit... mounted="$mounted",networked="$networked",deluge="$(docker inspect --format='{{.State.Running}}' $container)
+        echo -n $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after hitting loop limit..."
+		echo -n "mounted="$mounted
+		echo -n ",networked="$networked
+		echo ",$container="$(docker inspect --format='{{.State.Running}}' $container)
         break
     fi
 
