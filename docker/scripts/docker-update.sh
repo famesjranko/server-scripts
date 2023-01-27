@@ -134,7 +134,6 @@ stop_and_remove_container() {
   fi
 }
 
-
 bazarr() {
 clear
 header
