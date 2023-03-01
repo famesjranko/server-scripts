@@ -56,7 +56,7 @@ if $match; then
   done
 fi
 
-# Print the result
+# Log and act on result of tests
 if $match; then
   echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: logs match! No need to do anything!"
   exit 0
