@@ -10,11 +10,17 @@
 #  set script defaults
 # =====================
 
-# SET JELLYFIN LOG LOCATION
+# Set jellyfin log dir path
 JELLYFIN_LOG_DIR="/home/docker/jellyfin/config/log/log*.log"
 
-# SET FAIL2BAN JELLYFIN JAIL NAME
+# Set fail2ban jellyfin jail name
 JELLYFIN_JAIL="jellyfin"
+
+# Define the maximum number of retries for restarting service
+MAX_RETRIES=5
+
+# Define the sleep time between retries (in seconds)
+RETRY_SLEEP=5
 
 # ============================================
 #  run script to check jellyfin/fail2ban logs
@@ -62,5 +68,20 @@ if $match; then
   exit 0
 else
   echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: logs DO NOT match! Restarting fail2ban..."
-  systemctl restart fail2ban.service
+
+  # Attempt to restart fail2ban up to max_retries times
+  retries=0
+  while ! systemctl restart fail2ban.service && (( retries < MAX_RETRIES )); do
+    echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: failed to restart fail2ban! Retrying in ${RETRY_SLEEP}s..."
+    sleep ${RETRY_SLEEP}
+    (( retries++ ))
+  done
+
+  # Check whether fail2ban restarted successfully
+  if systemctl is-active --quiet fail2ban.service; then
+    echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: fail2ban restarted successfully."
+  else
+    echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: failed to restart fail2ban after ${retries} retries!"
+    exit 1
+  fi
 fi
