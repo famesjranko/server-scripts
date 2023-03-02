@@ -35,16 +35,16 @@ fail2ban_jellyfin_info=$(fail2ban-client status "$JELLYFIN_JAIL" | grep "File li
 # Split the input string by space and get the number of elements
 num_elements=$(awk '{print NF}' <<< "$fail2ban_jellyfin_info")
 
-# Get the elements from position 5 to the end
+# Get elements from position 5 to the end - log path references start at element 5
 fail2ban_logs=$(awk -v num=$num_elements '{for(i=5;i<=num;i++) print $i}' <<< "$fail2ban_jellyfin_info")
 
-# Get the list of files to check against
+# Get the current jellyfin logs to check against
 jellyfin_logs=$(ls "$JELLYFIN_LOG_DIR") || {
   echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: Failed to get list of Jellyfin logs! Exiting..."
   exit 1 
 }
 
-# Split the input strings by space, sort them and store in arrays
+# Split the input strings (log paths) by space, sort them and store in arrays
 fail2ban_logs_array=( $(awk '{for(i=1;i<=NF;i++) print $i}' <<< "$fail2ban_logs" | sort) )
 jellyfin_logs_array=( $(awk '{for(i=1;i<=NF;i++) print $i}' <<< "$jellyfin_logs" | sort) )
 #echo "${fail2ban_logs_array[@]}"
@@ -53,12 +53,12 @@ jellyfin_logs_array=( $(awk '{for(i=1;i<=NF;i++) print $i}' <<< "$jellyfin_logs"
 # Set match flag default to true
 match=true
 
-# TEST1 - Check if the arrays have the same length
+# TEST1 - Check if the arrays have the same length <- equal number of log paths
 if [[ ${#fail2ban_logs_array[@]} -ne ${#jellyfin_logs_array[@]} ]]; then
   match=false
 fi
 
-# TEST2 - Check if the arrays have the same content
+# TEST2 - Check if the arrays have the same content <- all log paths match
 if $match; then
   for i in "${!fail2ban_logs_array[@]}"; do
     if [[ "${fail2ban_logs_array[$i]}" != "${jellyfin_logs_array[$i]}" ]]; then
