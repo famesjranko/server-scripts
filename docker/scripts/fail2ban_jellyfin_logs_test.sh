@@ -10,8 +10,8 @@
 #  set script defaults
 # =====================
 
-# Set jellyfin log dir path
-JELLYFIN_LOG_DIR="/home/docker/jellyfin/config/log/log*.log"
+# Set jellyfin logs dir path <- same as one set as logpath in jail.local
+JELLYFIN_LOG_DIR="/fullpath/to/jellyfin/logdir/log*.log"
 
 # Set fail2ban jellyfin jail name
 JELLYFIN_JAIL="jellyfin"
