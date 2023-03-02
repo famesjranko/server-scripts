@@ -41,7 +41,7 @@ fail2ban_logs=$(awk -v num=$num_elements '{for(i=5;i<=num;i++) print $i}' <<< "$
 # Get the current jellyfin logs to check against
 jellyfin_logs=$(ls "$JELLYFIN_LOG_DIR") || {
   echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: Failed to get list of Jellyfin logs! Exiting..."
-  exit 1 
+  exit 1
 }
 
 # Split the input strings (log paths) by space, sort them and store in arrays
