@@ -26,8 +26,11 @@ RETRY_SLEEP=5
 #  run script to check jellyfin/fail2ban logs
 # ============================================
 
-# Get the input string
-fail2ban_jellyfin_info=$(fail2ban-client status $JELLYFIN_JAIL | grep "File list:")
+# Get Fail2ban Jellyfin info
+fail2ban_jellyfin_info=$(fail2ban-client status "$JELLYFIN_JAIL" | grep "File list:") || {
+  echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: Failed to get Fail2ban Jellyfin info! Exiting..."
+  exit 1
+}
 
 # Split the input string by space and get the number of elements
 num_elements=$(awk '{print NF}' <<< "$fail2ban_jellyfin_info")
@@ -36,9 +39,12 @@ num_elements=$(awk '{print NF}' <<< "$fail2ban_jellyfin_info")
 fail2ban_logs=$(awk -v num=$num_elements '{for(i=5;i<=num;i++) print $i}' <<< "$fail2ban_jellyfin_info")
 
 # Get the list of files to check against
-jellyfin_logs=$(ls $JELLYFIN_LOG_DIR)
+jellyfin_logs=$(ls "$JELLYFIN_LOG_DIR") || {
+  echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: Failed to get list of Jellyfin logs! Exiting..."
+  exit 1 
+}
 
-# Split the input strings by space and store them in arrays
+# Split the input strings by space, sort them and store in arrays
 fail2ban_logs_array=( $(awk '{for(i=1;i<=NF;i++) print $i}' <<< "$fail2ban_logs" | sort) )
 jellyfin_logs_array=( $(awk '{for(i=1;i<=NF;i++) print $i}' <<< "$jellyfin_logs" | sort) )
 #echo "${fail2ban_logs_array[@]}"
@@ -47,12 +53,12 @@ jellyfin_logs_array=( $(awk '{for(i=1;i<=NF;i++) print $i}' <<< "$jellyfin_logs"
 # Set match flag default to true
 match=true
 
-# Check if the arrays have the same length
+# TEST1 - Check if the arrays have the same length
 if [[ ${#fail2ban_logs_array[@]} -ne ${#jellyfin_logs_array[@]} ]]; then
   match=false
 fi
 
-# Check if the arrays have the same content
+# TEST2 - Check if the arrays have the same content
 if $match; then
   for i in "${!fail2ban_logs_array[@]}"; do
     if [[ "${fail2ban_logs_array[$i]}" != "${jellyfin_logs_array[$i]}" ]]; then
@@ -62,7 +68,7 @@ if $match; then
   done
 fi
 
-# Log and act on result of tests
+# Log and act on result of TESTS
 if $match; then
   echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: logs match! No need to do anything!"
   exit 0
@@ -80,6 +86,7 @@ else
   # Check whether fail2ban restarted successfully
   if systemctl is-active --quiet fail2ban.service; then
     echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: fail2ban restarted successfully."
+    exit 0
   else
     echo $(date '+%y-%m-%d %T')" [fail2ban_jellyfin_logs]: failed to restart fail2ban after ${retries} retries!"
     exit 1
