@@ -1,36 +1,47 @@
 #!/bin/bash
 
-## =====================================================================
+## =======================================================================
 ## DOCKER CONTAINER WAIT FOR NETWORK/MOUNT POINT START SCRIPT
 ##
 ## This script is used to check for the availability of a mapped drive
-## and network connection before starting docker container.
+## and network connection before starting docker container, and init the
+## fail2ban logging workaround.
 ##
-## The script will run until either the drive and network are available,
-## at which point it will start the container, or the loop limit is
-## reached.
+## The script will run until either the drive and network (optional are
+## available, at which point it will start the container, clear the
+## previous log, and start tail of logging.  Or will exit on fail if the
+## loop limit is reached before conditions are met.
 ##
 ## The drive and network availability is determined by the stat command
-## and ping command, respectively.
+## and ping command, respectively.  Stat requires that the test file has
+## been created on the mapped drive beforehand.
 ##
 ## The script will also check if the container is already running and
-## exit the loop if it is.
-## =====================================================================
+## exit the loop if it is - this is to allow docker restart-policy always
+## restart to be used.
+## =======================================================================
 
+# Set the script name for echo logging
 script_name="JELLYFIN STARTUP"
 
-# set mount point and testfile
+# Set container name
+container=jellyfin
+
+# Set mount point and testfile
 drive_mount=/data/media
 drive_mount_testfile=/data/media/testfile  # any empty file on the remote drive
-container=jellyfin
 
 # Set network test option and ping address
 check_network=false
 network_address=8.8.8.8
 
+# Set logging output file path
+logging_output_path=/home/docker/jellyfin/container.log
+
 # Set max loop iterations (60x10secs=~10mins)
 loop_limit=60
 
+# Init conditional flags and counter
 mounted=false
 networked=false
 loop_count=0
@@ -64,6 +75,15 @@ while true; do
     # Check if the container is running and exit if true
     if [[ $(docker inspect --format='{{.State.Running}}' $container) == "true" ]]; then
         echo $(date '+%y-%m-%d %T')" ["$script_name"]: "$container" is up!"
+	
+	# empty old log
+	echo $(date '+%y-%m-%d %T')" ["$script_name"]: Clearing older logs from "$logging_output_path
+        echo $(date '+%y-%m-%d %T')" ["$script_name"]: Older logs cleared..." > $logging_output_path
+
+	# Start container log tail and redirect to output log - optional: limit to 200 previous lines with '-n 200'
+	echo $(date '+%y-%m-%d %T')" ["$script_name"]: Starting log redirect at "$logging_output_path
+	docker logs -f -n 200 $container &> $logging_output_path &
+	
         break
     fi
 
@@ -76,9 +96,9 @@ while true; do
     # exit if more than 10mins elapsed and some/all containers won't start
     if [[ $loop_count -gt $loop_limit ]]; then
         echo -n $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after hitting loop limit..."
-		echo -n "mounted="$mounted
-		echo -n ",networked="$networked
-		echo ",$container="$(docker inspect --format='{{.State.Running}}' $container)
+	echo -n "mounted="$mounted
+	echo -n ",networked="$networked
+	echo ",$container="$(docker inspect --format='{{.State.Running}}' $container)
         break
     fi
 
