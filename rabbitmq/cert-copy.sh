@@ -33,7 +33,7 @@ if ! [[ $(find "$ORIG_FULLCHAIN" -mmin -90) ]] && ! [[ $(find "$ORIG_CERT" -mmin
   echo $(date +"%y-%m-%d %T")" ["$SCRIPT_NAME"]: No updates found for SSL certificates within last 90 minutes."
   exit 0
 else
-  echo $(date +"%y-%m-%d %T")" ["$SCRIPT_NAME"]: SSL certificates have been updated within the last 90mins!"
+  echo $(date +"%y-%m-%d %T")" ["$SCRIPT_NAME"]: SSL certificates have been updated within last 90mins!"
 
   # Compare SSL certificate contents and copy to RabbitMQ certs folder if they have changed
   #if false; then
