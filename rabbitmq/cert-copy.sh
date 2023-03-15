@@ -30,7 +30,7 @@ NEW_CHAIN="$DEST_FOLDER/chain.pem"
 # Check if the SSL certificates have not been updated by checking for no modification in the last 90 minutes
 #if false; then
 if ! [[ $(find "$ORIG_FULLCHAIN" -mmin -90) ]] && ! [[ $(find "$ORIG_CERT" -mmin -90) ]] && ! [[ $(find "$ORIG_PRIVKEY" -mmin -90) ]] && ! [[ $(find "$ORIG_CHAIN" -mmin -90) ]]; then
-  echo $(date +"%y-%m-%d %T")" ["$SCRIPT_NAME"]: No updates found for SSL certificates in last 90 minutes."
+  echo $(date +"%y-%m-%d %T")" ["$SCRIPT_NAME"]: No updates found for SSL certificates within last 90 minutes."
   exit 0
 else
   echo $(date +"%y-%m-%d %T")" ["$SCRIPT_NAME"]: SSL certificates have been updated within the last 90mins!"
