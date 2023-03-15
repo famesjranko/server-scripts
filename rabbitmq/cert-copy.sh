@@ -33,26 +33,27 @@ else
     echo "No mismatch of SSL contents found."
     exit 0
   else
-    echo "SSL contents found to not match! Copying updates..."
+    echo "SSL certificate contents do not match!"
 
     # Copy new certificates to rabbitmq folder
+    echo "Copying new SSL certificates..."
     cp -fv "$ORIG_FULLCHAIN" "$NEW_FULLCHAIN"
     cp -fv "$ORIG_CERT" "$NEW_CERT"
     cp -fv "$ORIG_PRIVKEY" "$NEW_PRIVKEY"
     cp -fv "$ORIG_CHAIN" "$NEW_CHAIN"
 
     # Set permissions and ownership for the copied files
-    echo "Updating ownership and permissions of certs..."
+    echo "Updating ownership and permissions of SSL certificates..."
     chmod 644 "$NEW_FULLCHAIN" "$NEW_CERT" "$NEW_CHAIN"
     chmod 600 "$NEW_PRIVKEY"
     chown rabbitmq:rabbitmq "$NEW_FULLCHAIN" "$NEW_CERT" "$NEW_CHAIN" "$NEW_PRIVKEY"
 
     # Restart RabbitMQ to ensure the new certificates are used
-    echo "Restarting Rabbitmq to ensure new certs are utilised..."
+    echo "Restarting Rabbitmq to ensure new SSL certificates are utilised..."
     for i in {1..5}; do
       if systemctl restart rabbitmq-server; then
         echo "RabbitMQ has been successfully restarted!"
-        break
+        exit 0
       else
         echo "RabbitMQ failed to restart. Retrying in 5 seconds..."
         sleep 5
