@@ -12,22 +12,28 @@ ORIG_PRIVKEY="$ORIG_FOLDER/privkey.pem"
 ORIG_CHAIN="$ORIG_FOLDER/chain.pem"
 
 # Set destination file/folder paths
-DEST_FOLDER="/full/path/rabbitmq/certs"
+DEST_FOLDER="/full/path/rabbitmq-certs"
 
 NEW_FULLCHAIN="$DEST_FOLDER/fullchain.pem"
 NEW_CERT="$DEST_FOLDER/cert.pem"
 NEW_PRIVKEY="$DEST_FOLDER/privkey.pem"
 NEW_CHAIN="$DEST_FOLDER/chain.pem"
 
-# Check if the SSL certificates have been updated by checking if their modification time is greater than 1 minute ago
-if [[ $(find "$ORIG_FULLCHAIN" -mmin +1) ]] || [[ $(find "$ORIG_CERT" -mmin +1) ]] || [[ $(find "$ORIG_PRIVKEY" -mmin +1) ]] || [[ $(find "$ORIG_CHAIN" -mmin +1) ]]; then
-#if true; then
-  echo "SSL certificates have been updated!"
+# Check if the SSL certificates have not been updated by checking for no modification in the last 90 minutes
+if ! [[ $(find "$ORIG_FULLCHAIN" -mmin -90) ]] && ! [[ $(find "$ORIG_CERT" -mmin -90) ]] && ! [[ $(find "$ORIG_PRIVKEY" -mmin -90) ]] && ! [[ $(find "$ORIG_CHAIN" -mmin -90) ]]; then
+#if false; then
+  echo "No updates seen for SSL certificates in last 90 minutes."
+  exit 0
+else
+  echo "SSL certificates changes found within the last 90mins!"
 
   # Compare SSL certificate contents and copy to RabbitMQ certs folder if they have changed
-  if ! cmp -s "$ORIG_FULLCHAIN" "$NEW_FULLCHAIN" || ! cmp -s "$ORIG_CERT" "$NEW_CERT" || ! cmp -s "$ORIG_PRIVKEY" "$NEW_PRIVKEY" || ! cmp -s "$ORIG_CHAIN" "$NEW_CHAIN"; then
-  #if true; then
-    echo "SSL contents found to not match!"
+  #if false; then
+  if cmp -s "$ORIG_FULLCHAIN" "$NEW_FULLCHAIN" && cmp -s "$ORIG_CERT" "$NEW_CERT" && cmp -s "$ORIG_PRIVKEY" "$NEW_PRIVKEY" && cmp -s "$ORIG_CHAIN" "$NEW_CHAIN"; then
+    echo "No mismatch of SSL contents found."
+    exit 0
+  else
+    echo "SSL contents found to not match! Copying updates..."
 
     # Copy new certificates to rabbitmq folder
     cp -fv "$ORIG_FULLCHAIN" "$NEW_FULLCHAIN"
@@ -36,19 +42,27 @@ if [[ $(find "$ORIG_FULLCHAIN" -mmin +1) ]] || [[ $(find "$ORIG_CERT" -mmin +1) 
     cp -fv "$ORIG_CHAIN" "$NEW_CHAIN"
 
     # Set permissions and ownership for the copied files
+    echo "Updating ownership and permissions of certs..."
     chmod 644 "$NEW_FULLCHAIN" "$NEW_CERT" "$NEW_CHAIN"
     chmod 600 "$NEW_PRIVKEY"
     chown rabbitmq:rabbitmq "$NEW_FULLCHAIN" "$NEW_CERT" "$NEW_CHAIN" "$NEW_PRIVKEY"
 
     # Restart RabbitMQ to ensure the new certificates are used
+    echo "Restarting Rabbitmq to ensure new certs are utilised..."
     for i in {1..5}; do
       if systemctl restart rabbitmq-server; then
-        echo "RabbitMQ has been successfully restarted."
+        echo "RabbitMQ has been successfully restarted!"
         break
       else
         echo "RabbitMQ failed to restart. Retrying in 5 seconds..."
         sleep 5
       fi
     done
+
+    # Check if RabbitMQ has been restarted
+    if ! systemctl is-active --quiet rabbitmq-server; then
+      echo "Error: RabbitMQ failed to start after 5 attempts."
+      exit 1
+    fi
   fi
 fi
