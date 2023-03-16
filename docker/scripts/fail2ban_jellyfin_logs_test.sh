@@ -64,6 +64,8 @@ get_jellyfin_logs() {
 
 # Function to test if two arrays have the same length and content
 # Returns true if the arrays match, false otherwise
+# NOTE: requires 'function' keyword due to declaring local variables
+# within the function.
 function test_arrays_match {
   local array1=("${!1}")
   local array2=("${!2}")
