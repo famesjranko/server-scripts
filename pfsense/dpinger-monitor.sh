@@ -11,7 +11,8 @@
 
 # Define a function to check if dpinger is running
 check_dpinger() {
-  if pgrep dpinger > /dev/null; then
+  #if pgrep dpinger > /dev/null; then # <--- causes issue when used with cron during testing 
+  if /usr/local/sbin/pfSsh.php playback svc status dpinger | grep "Service dpinger is running." > /dev/null 2>&1; then
     return 0
   else
     return 1
