@@ -4,6 +4,7 @@
 # Author: Andrew J. McDonald
 # Date: 2023-03-22
 # =====================================================================================
+# Description:
 # This script helps updating, installing and configuring various Docker containers via
 # Docker-CLI that I run on my home server.. It contains a menu for updating specific
 # containers or those that have been set within the default container group array. It
