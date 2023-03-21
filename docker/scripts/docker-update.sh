@@ -1,8 +1,17 @@
 #!/bin/bash
 
-# This is a bash script that facilitates updating, installing and configuring various Docker containers.
-# It contains a menu with options for updating specific or all standard containers, along with options
-# for showing the directory structure and exiting the script.
+# ===========================
+# Author: Andrew J. McDonald
+# Date: 2023-03-22
+# =====================================================================================
+# This script helps updating, installing and configuring various Docker containers via
+# Docker-CLI that I run on my home server.. It contains a menu for updating specific
+# containers or those that have been set within the default container group array. It
+# also has options for showing the mapped directory structure if set, along with global
+# container variables such as timezone, puid, pgid, and restart-policy.
+#
+# Sharing here in case it is helpful to anyone else who prefers docker-cli to compose.
+# =====================================================================================
 
 ## global variables
 PUID='SET PUID'
@@ -53,6 +62,7 @@ dir_struct() {
   clear
   header
 
+  # EDIT TO MAP DIRECTORY STRUCTURE
   cat<< EOF
   Directory Structure:
         /data
