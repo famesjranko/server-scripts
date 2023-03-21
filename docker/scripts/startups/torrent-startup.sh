@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# ===========================
+# Author: Andrew J. McDonald
+# Date: 2023-03-22
 ## =====================================================================
 ## DOCKER CONTAINER WAIT FOR NETWORK/MOUNT POINT START SCRIPT
 ##
