@@ -27,7 +27,7 @@ drive_mount=/data/torrents/
 drive_mount_testfile=/data/torrents/testfile
 
 # set container name
-container=rutorrent #deluge
+container=rutorrent #deluge qbittorrent
 
 # Set network test option and ping address
 check_network=true
