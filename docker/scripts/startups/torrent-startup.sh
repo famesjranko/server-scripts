@@ -6,6 +6,7 @@
 ## =====================================================================
 ## DOCKER CONTAINER WAIT FOR NETWORK/MOUNT POINT START SCRIPT
 ##
+## Description:
 ## This script is used to check for the availability of a mapped drive
 ## and network connection before starting docker container.
 ##
@@ -33,8 +34,10 @@ container=rutorrent #deluge qbittorrent
 check_network=true
 network_address=8.8.8.8
 
-# Set max loop iterations (60x10secs=~10mins)
+# Set max loop iterations and wait time (60x10secs=~10mins)
+# Set to 0 to disable the loop limit.
 loop_limit=60
+wait_time=10
 
 mounted=false
 networked=false
@@ -79,7 +82,7 @@ while true; do
     fi
     
     # exit if more than 10mins elapsed and some/all containers won't start
-    if [[ $loop_count -gt $loop_limit  ]]; then
+    if [[ $loop_limit -ne 0 && $loop_count -gt $loop_limit ]]; then
         echo -n $(date +"%y-%m-%d %T")" ["$script_name"]: Exiting after hitting loop limit..."
 		echo -n "mounted="$mounted
 		echo -n ",networked="$networked
@@ -87,5 +90,5 @@ while true; do
         break
     fi
 
-    sleep 10
+    sleep $wait_time
 done
