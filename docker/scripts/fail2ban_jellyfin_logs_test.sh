@@ -11,7 +11,7 @@
 # =====================
 
 # Set jellyfin logs dir path <- same as one set as logpath in jail.local
-#JELLYFIN_LOG_DIR="/path/to/jellyfin/config/log/log*.log"
+JELLYFIN_LOG_DIR="/path/to/jellyfin/config/log/log*.log"
 
 # Set fail2ban jellyfin jail name
 JELLYFIN_JAIL="jellyfin"
