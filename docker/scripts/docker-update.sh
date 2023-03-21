@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This is a bash script that facilitates updating, installing and configuring various Docker containers.
+# It contains a menu with options for updating specific or all standard containers, along with options
+# for showing the directory structure and exiting the script.
+
 ## global variables
 PUID='SET PUID'
 PGID='SET PGID'
