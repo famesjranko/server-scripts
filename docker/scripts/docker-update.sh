@@ -14,36 +14,33 @@
 # Sharing here in case it is helpful to anyone else who prefers docker-cli to compose.
 # =====================================================================================
 
-## Set global container variables
-PUID='SET PUID'
-PGID='SET PGID'
-TZ='SET/TIMEZONE'
+# Set global container variables
+PUID='1000'
+PGID='1000'
+TZ='COUNTRY/CITY'
 RESTART_POLICY='unless-stopped'
 
-# Set container config base directory
-DOCKER_HOME="/home/docker"
-
-# Set media/torrent paths
-MEDIA_DIR="/data/media"
-DEFAULT_TORRENT_DIR="/data/torrents"
-PRIVATE_TORRENT_DIR="/data/torrents_private"
-
 # Set bitwarden security token
-BITWARDEN_TOKEN=SET-TOKEN
+BITWARDEN_TOKEN=
 
-# Create array of default container functions to call at once if desired
-#
-# container names = function names for specfified container
-default_group=("bitwarden" "jackett" "jellyfin" "jellyseerr" "radarr" "sonarr" "omada")
+# Set container config base directory
+DOCKER_HOME="/path/to/docker-base-path"
 
-# Set whether to pause after container build or not (1=yes)
+# Set media dir path
+MEDIA_DIR="/path/to/media"
+
+# Set torrent dir path/s - I use both public and private trackers
+DEFAULT_TORRENT_DIR="/path/to/default-torrents"
+PRIVATE_TORRENT_DIR="/path/to/private-torrents"
+
+# set whether to pause after container build or not (1=yes)
 PAUSE=1
 
 # Set menu options key/value store for use in menu to call
 # relevant functions.
 #
 # Key   = menu choice
-# Value = function name 
+# Value = function name
 declare -A options=(
   ["1"]="bazarr"
   ["2"]="bitwarden"
@@ -65,16 +62,14 @@ declare -A options=(
   ["d"]="dir_struct"
 )
 
-# dir_struct - Display directory structure and permissions
-#
-# Description: 
-#   This function displays the current directory structure and permissions that the script expects. 
-#   It also displays the current timezone and restart policy.
-#
-# Usage: 
-#   This function is called by the main menu when the user selects option "D" or "d".
-#
-# Returns: 
+# Create array of default container functions to call at once if desired
+# container names = function names for specfified container
+default_group=("bitwarden" "jackett" "jellyfin" "jellyseerr" "radarr" "sonarr" "omada")
+
+# Description:
+#   This function displays the current directory structure and permissions that the script
+#   expects. It also displays the current timezone and restart policy.
+# Returns:
 #   None.
 header() {
   sleep .3
@@ -87,14 +82,16 @@ header() {
 EOF
 }
 
-# This function prints out the directory structure, permissions, timezone, and restart policy
-# of the Docker container setup. The information is displayed in a formatted manner, where the
-# directory structure is visualized using ASCII art. 
+# Description:
+#   This function prints out the directory structure, permissions, timezone, and restart
+#   policy of the Docker container setup. The information is displayed in a formatted
+#   manner, where the directory structure is visualized using ASCII art.
+# Returns:
+#   None.
 dir_struct() {
   clear
   header
 
-  # EDIT TO MAP DIRECTORY STRUCTURE
   cat<< EOF
   Directory Structure:
         /data
@@ -111,24 +108,17 @@ dir_struct() {
         Group: $PGID
 
   Timezone: $TZ
-  Restart-Policy: $RESTART_POLICY
 EOF
 
   pause
   clear
 }
 
-# menu - Display the menu of options for the main script
-#
-# Description: 
+# Description:
 #   This function displays the menu of options for the main script. It uses the
 #   global array "options" to display each option as a menu item with a number.
 #   It also includes additional options to update all standard containers, show
 #   the directory structure, and quit the script.
-#
-# Usage:
-#   menu
-#
 # Returns:
 #   None.
 menu() {
@@ -143,8 +133,11 @@ menu() {
   echo -e "\n  (q) quit\n"
 }
 
-# This function prints the final message of the Docker update script
-# and shows the list of all running containers
+# Description:
+#   This function prints the final message of the Docker update script
+#   and shows the list of all running containers
+# Returns:
+#   None.
 final_print() {
   clear
   cat<< "EOF"
@@ -159,8 +152,11 @@ EOF
   docker ps --format "table {{.ID}}: \t{{.Names}} \t{{.RunningFor}} \t{{.Status}}"
 }
 
-# This function pauses the script and waits for user input before
-# continuing, if PAUSE variable is set to 1
+# Description:
+#   This function pauses the script and waits for user input before
+#   continuing, if PAUSE variable is set to 1
+# Returns:
+#   None.
 pause() {
   if [ $PAUSE -eq 1 ]
     then
@@ -170,7 +166,7 @@ pause() {
 
 # stop_and_remove_container - Stop and remove a Docker container
 #
-# Description: 
+# Description:
 #   This function stops and removes a Docker container with the given name and ID.
 #   If the container is not present, it will print a message indicating so.
 #
@@ -207,19 +203,17 @@ function stop_and_remove_container() {
     fi
 }
 
-# tdarr - Update and initialize a Tdarr Docker container
-#
-# Description: 
-#   This function updates and initializes a Tdarr Docker container with the latest
-#   image. It first stops and removes any existing container with the same name,
-#   and then pulls the latest image from the registry. It then initializes a new
-#   container with the given configuration and options.
-#
-# Usage:
-#   tdarr
-#
-# Returns:
-#   None.
+# =================================================================================
+# CONTAINER UPDATE FUNCTIONS
+# Description:
+#   These functions update and initialise respective Docker containers with the
+#   latest image. They first stop and remove any existing container with the same
+#   name as the container to be updated, and then pull the latest image from their
+#   respective repository. They then initializes a new container with the prior
+#   containers configuration and options as set within each update function.
+# ==================================================================================
+
+# TDARR CONTAINER UPDATE FUNCTION
 tdarr() {
 clear
 header
@@ -267,26 +261,13 @@ EOF
     --restart=$RESTART_POLICY \
     ghcr.io/haveagitgat/tdarr
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# bazarr - Update and initialise the Bazarr Docker container
-#
-# Description: 
-#   This function updates the Docker image for the Bazarr container, stops and removes any
-#   existing containers with the same name, then initialises a new container with the updated
-#   image. It uses the global variables $PUID, $PGID, $TZ, and $RESTART_POLICY to configure
-#   the container. It also displays messages to indicate the progress of the update and 
-#   initialisation processes, and prompts the user to press any key to continue after the
-#   processes are complete.
-#
-# Usage:
-#   bazarr
-#
-# Returns:
-#   None.
+# BAZARR CONTAINER UPDATE FUNCTION
 bazarr() {
 clear
 header
@@ -314,30 +295,18 @@ EOF
     -e UMASK_SET=022 \
     -p 6767:6767 \
     -v $DOCKER_HOME/bazarr/config:/config \
-    -v $MEDIA_DIR/movies:/data/media/movies \
-    -v $MEDIA_DIR/television:/data/media/television \
+    -v $MEDIA_DIR/movies:$MEDIA_DIR/movies \
+    -v $MEDIA_DIR/television:$MEDIA_DIR/television \
     --restart=$RESTART_POLICY \
     ghcr.io/linuxserver/bazarr
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# bitwarden - Update and initialise the Bitwarden container
-#
-# Description: 
-#   This function updates the Bitwarden container by stopping and removing it
-#   if it exists, pulling the latest image, and initialising a new container with
-#   the updated image. The container is initialised with various environment
-#   variables, port mappings, and volume mappings. The function then waits for
-#   user input before clearing the screen and returning.
-#
-# Usage:
-#   bitwarden
-#
-# Returns:
-#   None.
+# BITWARDEN CONTAINER UPDATE FUNCTION
 bitwarden() {
   clear
   header
@@ -377,25 +346,13 @@ EOF
     --restart=$RESTART_POLICY \
     vaultwarden/server:latest
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# deluge - Update and run Deluge Docker container
-#
-# Description: 
-#   This function updates the Deluge Docker container to the latest version and
-#   starts a new container with the specified configuration. It uses the "stop_and_remove_container"
-#   function to stop and remove any existing container with the same name before
-#   starting a new one. The function also sets environment variables and mounts volumes
-#   as required for the container to function correctly. 
-#
-# Usage:
-#   deluge
-#
-# Returns:
-#   None.
+# DELUGE CONTAINER UPDATE FUNCTION
 deluge() {
   clear
   header
@@ -426,30 +383,18 @@ EOF
     -p 60401:60401 \
     -p 60401:60401/udp \
     -v $DOCKER_HOME/deluge/config:/config \
-    -v $DEFAULT_TORRENT_DIR:/data/torrents \
-    -v $PRIVATE_TORRENT_DIR:/data/torrents_private \
+    -v $DEFAULT_TORRENT_DIR:$DEFAULT_TORRENT_DIR \
+    -v $PRIVATE_TORRENT_DIR:$PRIVATE_TORRENT_DIR \
     --restart=$RESTART_POLICY \
     lscr.io/linuxserver/deluge:latest
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# jackett - Update and start a Jackett Docker container
-#
-# Description: 
-#   This function updates the Docker image for Jackett and starts a new container
-#   with the specified configuration options. It uses the global variables $PUID,
-#   $PGID, $TZ, and $RESTART_POLICY to configure the container. The function also
-#   mounts a host directory to the container to store the configuration and
-#   downloads directories.
-#
-# Usage:
-#   jackett
-#
-# Returns:
-#   None.
+# JACKETT CONTAINER UPDATE FUNCTION
 jackett() {
   clear
   header
@@ -480,27 +425,13 @@ EOF
     --restart=$RESTART_POLICY \
     linuxserver/jackett
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# jellyfin - Update and initialize the Jellyfin Docker container
-#
-# Description: 
-#   This function updates the Jellyfin Docker container to the latest version,
-#   and initializes a new container with the updated image. It stops and removes
-#   any existing container with the name "jellyfin", and then pulls the latest
-#   "jellyfin/jellyfin" image from Docker Hub. It initializes the new container
-#   with the necessary environment variables and volume mounts, and exposes the
-#   necessary ports for Jellyfin to function. It also sets up the necessary GPU
-#   device mappings for NVIDIA hardware acceleration, if available.
-#
-# Usage:
-#   jellyfin
-#
-# Returns:
-#   None.
+# JELLYFIN CONTAINER UPDATE FUNCTION
 jellyfin() {
   clear
   header
@@ -546,28 +477,13 @@ EOF
     jellyfin/jellyfin
     #linuxserver/jellyfin
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# jellyseerr - Update and run the Jellyseerr container
-#
-# Description: 
-#   This function updates the Jellyseerr container to the latest version and runs
-#   it with the specified configuration and environment variables. It first stops
-#   and removes any existing container with the same name to avoid conflicts. It
-#   then pulls the latest image from Docker Hub and initializes the container
-#   with the specified configuration and environment variables. Once the container
-#   is running, the function displays a message indicating that the process is
-#   finished and prompts the user to press any key to continue. Finally, the screen
-#   is cleared and the function returns.
-#
-# Usage:
-#   jellyseerr
-#
-# Returns:
-#   None.
+# JELLYSEERR CONTAINER UPDATE FUNCTION
 jellyseerr() {
   clear
   header
@@ -598,26 +514,13 @@ EOF
     --restart=$RESTART_POLICY \
     fallenbagel/jellyseerr:latest
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# omada - Update and start the Omada-Controller container
-#
-# Description: 
-#   This function updates and starts the Omada-Controller container. It uses
-#   the global variable "TZ" to set the container's timezone. It also maps
-#   the container's ports to the host and mounts the container's data,
-#   work, and log directories to the host's file system. Finally, it uses
-#   the "stop_and_remove_container" function to stop and remove any existing
-#   container with the same name before starting a new one.
-#
-# Usage:
-#   omada
-#
-# Returns:
-#   None.
+# OMADA CONTROLLER CONTAINER UPDATE FUNCTION
 omada() {
   clear
   header
@@ -667,27 +570,16 @@ EOF
     -v $DOCKER_HOME/omada/data:/opt/tplink/EAPController/data \
     -v $DOCKER_HOME/omada/work:/opt/tplink/EAPController/work \
     -v $DOCKER_HOME/omada/logs:/opt/tplink/EAPController/logs \
-    --restart=$RESTART_POLICY \
+        --restart=$RESTART_POLICY \
     mbentley/omada-controller:latest
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# portainer - Update and initialize the Portainer container
-#
-# Description:
-#   This function updates and initializes the Portainer container. It first
-#   stops and removes any existing container with the same name, then pulls
-#   the latest Portainer image and initializes a new container with the
-#   specified configuration.
-#
-# Usage:
-#   portainer
-#
-# Returns:
-#   None.
+# PORTAINER CONTAINER UPDATE FUNCTION
 portainer() {
   clear
   header
@@ -716,27 +608,16 @@ EOF
     -p 9000:9000 \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v $DOCKER_HOME/portainer:/data \
-    --restart=$RESTART_POLICY \
+        --restart=$RESTART_POLICY \
     portainer/portainer-ce
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# radarr - Update and run Radarr container
-#
-# Description: 
-#   This function updates the Radarr container by pulling the latest image and
-#   starting a new container with the specified configurations. It uses the
-#   global variables "PUID", "PGID", "TZ", and "RESTART_POLICY" to set the
-#   container environment variables and options.
-#
-# Usage:
-#   radarr
-#
-# Returns:
-#   None.
+# RADARR CONTAINER UPDATE FUNCTION
 radarr() {
   clear
   header
@@ -768,23 +649,13 @@ EOF
     --restart=$RESTART_POLICY \
     linuxserver/radarr
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# rtorrent - Update and initialize a docker container with RuTorrent
-#
-# Description:
-#   This function updates and initializes a docker container running RuTorrent
-#   with recommended settings. The container is based on the "crazymax"
-#   version, as recommended by "linuxserver.io".
-#
-# Usage:
-#   rtorrent
-#
-# Returns:
-#   None.
+# RTORRENT CONTAINER UPDATE FUNCTION
 rtorrent () {
   clear
   header
@@ -799,32 +670,6 @@ EOF
   container_id=$(docker ps -a -q --filter name=$container_name)
 
   stop_and_remove_container $container_name $container_id
-
-  ## ===========================================
-  ## k44sh version, fork of crazy max (think so)
-  ## ===========================================
-  #echo "pull latest $container_name image..."
-  #docker pull k44sh/rutorrent:latest
-
-  #echo "initialise $container_name container..."
-  #docker run -d \
-    #--name $container_name \
-    #--ulimit nproc=65535 \
-    #--ulimit nofile=32000:40000 \
-    #-e PUID=$PUID \
-    #-e PGID=$PGID \
-    #-e TZ=$TZ \
-    #-e UMASK_SET=022 \
-    #-p 6881:6881/udp \
-    #-p 8000:8000 \
-    #-p 8084:8080 \
-    #-p 9000:9000 \
-    #-p 60403:60403 \
-    #-v /home/docker/rtorrent/config:/config \
-    #-v /home/docker/rtorrent/passwd:/passwd \
-    #-v /data/torrents:/data/torrents \
-    #--restart=$RESTART_POLICY \
-    #k44sh/rutorrent:latest
 
   ## ==================================================
   ## crazy max version (recommended by linux server io)
@@ -848,49 +693,18 @@ EOF
     -p 60402:60402 \
     -v $DOCKER_HOME/rtorrent_crazymax/data:/data \
     -v $DOCKER_HOME/rtorrent_crazymax/passwd:/passwd \
-    -v $DEFAULT_TORRENT_DIR:/data/torrents \
-    -v $PRIVATE_TORRENT_DIR:/data/torrents_private \
+    -v $DEFAULT_TORRENT_DIR:$DEFAULT_TORRENT_DIR \
+    -v $PRIVATE_TORRENT_DIR:$PRIVATE_TORRENT_DIR \
     --restart=$RESTART_POLICY \
     crazymax/rtorrent-rutorrent:latest
 
-  ## ===========================
-  ## romancin version (older...)
-  ## ===========================
-  #echo "pull latest rutorrent image..."
-  #docker pull romancin/rutorrent:latest
-
-  #echo "initialise $container_name container..."
-  #docker run -d \
-    #--name=rutorrent \
-    #-e PUID=$PUID \
-    #-e PGID=$PGID \
-    #-e TZ=$TZ \
-    #-e UMASK_SET=022 \
-    #-p 8113:80 \
-    #-p 60402-60402:60402-60402 \
-    #-v /home/docker/rutorrent/config:/config \
-    #-v /data/torrents:/data/torrents \
-    #--restart=$RESTART_POLICY \
-    #romancin/rutorrent:latest
-
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# sonarr - Update and start a Sonarr Docker container
-#
-# Description:
-#   This function updates the Sonarr Docker container and starts it with the
-#   specified configuration. It also creates a symlink between the Sonarr
-#   container's torrent directory and the /downloads directory for easier
-#   access. The function uses the LinuxServer.io image of Sonarr.
-#
-# Usage:
-#   sonarr
-#
-# Returns:
-#   None.
+# SONARR CONTAINER UPDATE FUNCTION
 sonarr() {
   clear
   header
@@ -932,24 +746,13 @@ EOF
       echo -e "\t [  FAIL  ]"
   fi
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# tmm - Update and initialize the TinyMediaManager Docker container
-#
-# Description:
-#   This function updates the TinyMediaManager Docker container to the latest
-#   version, and then initializes it with the specified configuration and volume
-#   mappings. This container is used to manage and organize media files, such as
-#   movies and TV shows.
-#
-# Usage:
-#   tmm
-#
-# Returns:
-#   None.
+# TINY MEDIA MANAGER CONTAINER UPDATE FUNCTION
 tmm() {
   clear
   header
@@ -975,30 +778,20 @@ EOF
     -e PUID=$PUID \
     -e PGID=$PGID \
     -v $DOCKER_HOME/tinymediamanager/config:/config \
-    -v $MEDIA_DIR/movies:/data/media/movies \
-    -v $MEDIA_DIR/television:/data/media/television \
-    -v $DEFAULT_TORRENT_DIR:/data/torrents \
+    -v $MEDIA_DIR/movies:$MEDIA_DIR/movies \
+    -v $MEDIA_DIR/television:$MEDIA_DIR/television \
+    -v $DEFAULT_TORRENT_DIR:$DEFAULT_TORRENT_DIR \
     -p 5800:5800 \
     --restart=$RESTART_POLICY \
     romancin/tinymediamanager:latest-v4
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# qbittorrent - Update and initialise the qbittorrent Docker container
-#
-# Description:
-#   This function updates the qbittorrent Docker container to the latest version
-#   or a specific version, depending on which image is pulled. It then initialises
-#   the container with the necessary environment variables, volumes and port mappings.
-#
-# Usage:
-#   qbittorrent
-#
-# Returns:
-#   None.
+# QBITTORRENT CONTAINER UPDATE FUNCTION
 qbittorrent() {
   clear
   header
@@ -1030,8 +823,8 @@ EOF
     -p 60402:60402/udp \
     -p 8081:8081 \
     -v $DOCKER_HOME/qbittorrent/config:/config \
-    -v $DEFAULT_TORRENT_DIR:/data/torrents \
-    -v $PRIVATE_TORRENT_DIR:/data/torrents_private \
+    -v $DEFAULT_TORRENT_DIR:$DEFAULT_TORRENT_DIR \
+    -v $PRIVATE_TORRENT_DIR:$PRIVATE_TORRENT_DIR \
     --restart=$RESTART_POLICY \
     linuxserver/qbittorrent
 
@@ -1040,20 +833,19 @@ EOF
   # INFO: otherwise, use current
   #     linuxserver/qbittorrent
 
-  echo -e "\nfinished."
+  echo
+  echo "finished."
   pause
   clear
 }
 
-# update_group - Update the default group of applications
-#
+# =================================
+# CONTAINER UPDATE FUNCTIONS - END
+# =================================
+
 # Description:
 #   This function updates the default group of applications by calling each function
 #   in the group
-#
-# Usage:
-#   update_group
-#
 # Returns:
 #   None.
 update_group() {
@@ -1069,16 +861,10 @@ update_group() {
   #PAUSE=1
 }
 
-# main - The main function that displays the menu and handles user input
-#
 # Description:
-#   This function is the main entry point of the script. It displays a menu of options to the user and
-#   prompts for input. It then processes the user's input and either executes the corresponding function,
-#   or prints an error message if the input is invalid.
-#
-# Usage:
-#   main
-#
+#   This function is the main entry point of the script. It displays a menu of options to
+#   the user and prompts for input. It then processes the user's input and either executes
+#   the corresponding function, or prints an error message if the input is invalid.
 # Returns:
 #   None.
 main() {
@@ -1101,6 +887,6 @@ main() {
   exit
 }
 
-## execute main
+# clear screen and execute main fcnction
 clear
 main
