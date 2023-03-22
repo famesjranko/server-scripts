@@ -24,11 +24,19 @@
 ## The script requires the "stat" and "mount" commands to be installed.
 ## ==============================================================================
 
+# Set script name for print logging
 SCRIPT_NAME="USB-MOUNT"
 
-UUID="8147280a-0776-47a7-9223-32e52ab22163"
-MOUNT_PATH="/data/torrents/"
-DRIVE_MOUNT_TESTFILE=$MOUNT_PATH"testfile"
+# Set drive UUID
+UUID="00000000-0000-0000-0000-000000000000"
+
+# Set mount path
+MOUNT_PATH="/path/to/mount/location"
+
+# Set path for testfile
+DRIVE_MOUNT_TESTFILE=$MOUNT_PATH"/testfile"
+
+# Set default wait time
 WAIT_TIME=10
 
 # Set max loop iterations (60x10secs=~10mins)
