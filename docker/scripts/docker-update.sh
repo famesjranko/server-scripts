@@ -91,23 +91,28 @@ EOF
 dir_struct() {
   clear
   header
+  
+  # Get directory trees - depth=1, only dirs
+  home_tree=$(tree $DOCKER_HOME -L 1 -d | grep -v "directories" | sed 's/^/      /')
+  media_tree=$(tree $MEDIA_DIR -L 1 -d | grep -v "directories" | sed 's/^/      /')
+  default_torrent_tree=$(tree $DEFAULT_TORRENT_DIR -L 1 -d | grep -v "directories" | sed 's/^/      /')
+  private_torrent_tree=$(tree $PRIVATE_TORRENT_DIR -L 1 -d | grep -v "directories" | sed 's/^/      /')
 
   cat<< EOF
-  Directory Structure:
-        /data
-           | - /torrents
-           |       | - /radarr
-           |       | - /tv-sonnar
-           |
-           | - /media
-                   | - /movies
-                   | - /tv
-
+  Docker Home Directory Structure:
+$home_tree
+  Media Directory Structure:
+$media_tree
+  Default Torrent Directory Structure:
+$default_torrent_tree
+  Private Torrent Directory Structure:
+$private_torrent_tree
   Permissions:
-         User: $PUID
-        Group: $PGID
-
+	 User: $PUID
+	Group: $PGID
+  
   Timezone: $TZ
+  
 EOF
 
   pause
