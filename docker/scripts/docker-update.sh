@@ -1069,7 +1069,6 @@ update_group() {
   #PAUSE=1
 }
 
-
 # main - The main function that displays the menu and handles user input
 #
 # Description:
