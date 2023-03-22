@@ -26,7 +26,7 @@ DOCKER_HOME="/home/docker"
 # Set media/torrent paths
 MEDIA_DIR="/data/media"
 DEFAULT_TORRENT_DIR="/data/torrents"
-PRIVATE_TORRENT_DIR"/data/torrents_private"
+PRIVATE_TORRENT_DIR="/data/torrents_private"
 
 # Set bitwarden security token
 BITWARDEN_TOKEN=SET-TOKEN
