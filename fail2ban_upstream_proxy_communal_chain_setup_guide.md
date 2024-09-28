@@ -1,7 +1,13 @@
-## Fail2Ban Setup for Using a Communal `iptables` Chain on an Upstream Server
+## Fail2Ban Setup for Using `iptables` Chains on an Upstream Server
 
-### Prerequisites:
-- **Fail2Ban** is installed and configured on your local server (where the services such as Jellyfin, Nginx, etc. are running).
+This guide provides two options for setting up Fail2Ban to manage IP bans on an upstream reverse proxy server:
+
+1. **Dynamic Chains**: Each Fail2Ban jail dynamically creates and manages its own `iptables` chain on the upstream server.
+2. **Communal Chain**: All Fail2Ban jails share a single communal `iptables` chain on the upstream server.
+
+### Prerequisites
+
+- **Fail2Ban** is installed and configured on your local server (where services such as Jellyfin, Nginx, etc. are running).
 - **SSH key-based access** is configured from your Fail2Ban server to the upstream server, which will execute the `iptables` rules.
 - **iptables** is installed and configured on the upstream reverse proxy server.
 
@@ -31,9 +37,88 @@ Ensure the Fail2Ban server can SSH into the upstream server without needing a pa
    ssh -i /root/.ssh/id_rsa root@<upstream-server-ip>
    ```
 
-### Step 2: Create a Communal `iptables` Chain on the Upstream Server
+---
 
-We’ll use a single `iptables` chain named `f2b-communal` on the upstream server to handle bans from all Fail2Ban jails.
+### Option 1: Dynamic `iptables` Chains for Each Jail
+
+This approach dynamically creates, manages, and removes separate `iptables` chains for each Fail2Ban jail on the upstream server.
+
+#### Step 2: Configure Fail2Ban for Dynamic Chains
+
+1. **Create the Fail2Ban Action File**:
+
+   On the Fail2Ban server, create a new action file:
+
+   ```bash
+   sudo nano /etc/fail2ban/action.d/proxy-iptables-dynamic.conf
+   ```
+
+2. **Add the Following Configuration**:
+
+   This action dynamically creates, manages, and removes `iptables` chains per jail:
+
+   ```ini
+   [Definition]
+
+   # Option: actionban
+   actionban = ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@<upstream-server-ip> \
+                'iptables -N f2b-%(name)s 2>/dev/null || true; \
+                 iptables -C INPUT -j f2b-%(name)s 2>/dev/null || iptables -I INPUT -j f2b-%(name)s; \
+                 iptables -I f2b-%(name)s 1 -s %(ip)s -j DROP' && \
+                echo "Banned %(ip)s from jail %(name)s via upstream proxy" >> /var/log/fail2ban.log
+
+   # Option: actionunban
+   actionunban = ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@<upstream-server-ip> \
+                'iptables -D f2b-%(name)s -s %(ip)s -j DROP; \
+                 if ! iptables -L f2b-%(name)s | grep -q "DROP"; then \
+                     iptables -D INPUT -j f2b-%(name)s; \
+                     iptables -F f2b-%(name)s; \
+                     iptables -X f2b-%(name)s; \
+                 fi' && \
+                echo "Unbanned %(ip)s from jail %(name)s via upstream proxy and cleaned up chain if empty" >> /var/log/fail2ban.log
+   ```
+
+   Replace `<upstream-server-ip>` with the actual IP address of your upstream server.
+
+#### Step 3: Configure Fail2Ban Jails to Use Dynamic Chains
+
+1. **Edit Jail Configuration**:
+
+   Open your jail configuration file, usually located at `/etc/fail2ban/jail.local`:
+
+   ```bash
+   sudo nano /etc/fail2ban/jail.local
+   ```
+
+2. **Update the Jails to Use the Dynamic Chain Action**:
+
+   Here’s an example configuration for two jails:
+
+   ```ini
+   [jellyfin]
+   enabled  = true
+   filter   = jellyfin
+   logpath  = /path/to/jellyfin/log
+   maxretry = 3
+   bantime  = 3600
+   action   = proxy-iptables-dynamic
+
+   [nginx-http-auth]
+   enabled  = true
+   filter   = nginx-http-auth
+   logpath  = /var/log/nginx/error.log
+   maxretry = 5
+   bantime  = 600
+   action   = proxy-iptables-dynamic
+   ```
+
+---
+
+### Option 2: Communal `iptables` Chain
+
+This approach uses a single communal `iptables` chain shared by all Fail2Ban jails on the upstream server.
+
+#### Step 2: Create a Communal `iptables` Chain on the Upstream Server
 
 1. **Log in to the Upstream Server:**
 
@@ -52,7 +137,7 @@ We’ll use a single `iptables` chain named `f2b-communal` on the upstream serve
 
 3. **Automate Chain Creation at Boot (Cron Job):**
 
-   To ensure the communal chain exists after every reboot, add the following cron job:
+   To ensure the chain is created and linked after every reboot, add the following cron job:
 
    ```bash
    sudo crontab -e
@@ -64,15 +149,11 @@ We’ll use a single `iptables` chain named `f2b-communal` on the upstream serve
    @reboot sleep 30 && ( /usr/sbin/iptables -N f2b-communal 2>/dev/null; /usr/sbin/iptables -C INPUT -j f2b-communal || /usr/sbin/iptables -I INPUT -j f2b-communal )
    ```
 
-This ensures that the chain is automatically created and linked to `INPUT` after every reboot.
-
-### Step 3: Configure the Fail2Ban Action to Use the Communal Chain
-
-We’ll configure Fail2Ban to use the communal chain for both banning and unbanning IPs. This action will be shared by all jails.
+#### Step 3: Configure Fail2Ban for the Communal Chain
 
 1. **Create the Fail2Ban Action File**:
 
-   On the Fail2Ban server, create a new action file at `/etc/fail2ban/action.d/proxy-iptables-communal.conf`:
+   On the Fail2Ban server, create a new action file:
 
    ```bash
    sudo nano /etc/fail2ban/action.d/proxy-iptables-communal.conf
@@ -80,27 +161,17 @@ We’ll configure Fail2Ban to use the communal chain for both banning and unbann
 
 2. **Add the Following Configuration**:
 
-   This action will ban and unban IPs on the upstream server using the communal chain:
-
    ```ini
    [Definition]
 
-   # No need for actionstart or actionstop since we're using a communal chain
-
    # Option: actionban
-   # Add the IP to the communal chain
    actionban = ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@<upstream-server-ip> "iptables -I f2b-communal 1 -s <ip> -j DROP" && echo "Banned <ip>" >> /var/log/fail2ban.log
 
    # Option: actionunban
-   # Remove the IP from the communal chain
    actionunban = ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@<upstream-server-ip> "iptables -D f2b-communal -s <ip> -j DROP" && echo "Unbanned <ip>" >> /var/log/fail2ban.log
    ```
 
-   Replace `<upstream-server-ip>` with the actual IP address of your upstream server.
-
-### Step 4: Configure Fail2Ban Jails to Use the Communal Chain
-
-Now, modify the Fail2Ban jails to use the communal action for banning and unbanning IPs.
+#### Step 4: Configure Fail2Ban Jails to Use the Communal Chain
 
 1. **Edit Jail Configuration**:
 
@@ -110,9 +181,9 @@ Now, modify the Fail2Ban jails to use the communal action for banning and unbann
    sudo nano /etc/fail2ban/jail.local
    ```
 
-2. **Update the Jails to Use the Communal Action**:
+2. **Update the Jails to Use the Communal Chain**:
 
-   Here’s an example configuration for two jails (`jellyfin` and `nginx-http-auth`):
+   Here’s an example configuration for two jails:
 
    ```ini
    [jellyfin]
@@ -121,7 +192,7 @@ Now, modify the Fail2Ban jails to use the communal action for banning and unbann
    logpath  = /path/to/jellyfin/log
    maxretry = 3
    bantime  = 3600
-   action   = proxy-iptables-communal  # Use the communal action
+   action   = proxy-iptables-communal
 
    [nginx-http-auth]
    enabled  = true
@@ -129,10 +200,10 @@ Now, modify the Fail2Ban jails to use the communal action for banning and unbann
    logpath  = /var/log/nginx/error.log
    maxretry = 5
    bantime  = 600
-   action   = proxy-iptables-communal  # Use the communal action
+   action   = proxy-iptables-communal
    ```
 
-   You can add as many jails as you need, all sharing the same communal action.
+---
 
 ### Step 5: Restart Fail2Ban and Test the Setup
 
@@ -161,15 +232,21 @@ Now, modify the Fail2Ban jails to use the communal action for banning and unbann
    sudo fail2ban-client set jellyfin banip 192.168.1.100
    ```
 
-   Check if the IP is banned in the communal chain on the upstream server:
+4. **Verify on Upstream Server**:
+
+   Check if the IP is banned in the communal or dynamic chain on the upstream server:
 
    ```bash
    ssh root@<upstream-server-ip> "iptables -L f2b-communal"
    ```
 
-   You should see the IP in the communal chain.
+   or
 
-4. **Test Unbanning**:
+   ```bash
+   ssh root@<upstream-server-ip> "iptables -L f2b-jellyfin"
+   ```
+
+5. **Test Unbanning**:
 
    To test unbanning, manually unban the IP:
 
@@ -177,11 +254,15 @@ Now, modify the Fail2Ban jails to use the communal action for banning and unbann
    sudo fail2ban-client set jellyfin unbanip 192.168.1.100
    ```
 
-   Verify that the IP is removed from the communal chain:
+6. **Verify Unban**:
+
+   Verify that the IP is removed from the chain on the upstream server:
 
    ```bash
    ssh root@<upstream-server-ip> "iptables -L f2b-communal"
    ```
+
+---
 
 ### Step 6: Monitor Logs
 
@@ -192,7 +273,3 @@ tail -f /var/log/fail2ban.log
 ```
 
 This log will show messages whenever an IP is banned or unbanned, ensuring the actions are being executed properly.
-
-### Conclusion
-
-You now have a fully functioning Fail2Ban setup that uses a communal `iptables` chain on an upstream reverse proxy server. This setup simplifies the configuration and management of IP banning across multiple Fail2Ban jails, while keeping all bans centralized in a single chain.
