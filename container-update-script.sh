@@ -84,9 +84,9 @@ docker pull linuxserver/jackett
 echo "re-initialise jackett container..."
 docker run -d \
   --name=jackett \
-  -e PUID=1000 \
-  -e PGID=8675309 \
-  -e TZ=Australia/Melbourne \
+  -e PUID=<PUID> \
+  -e PGID=<PGID> \
+  -e TZ=<Country/City> \
   -p 9117:9117 \
   -v /home/docker/jackett/config:/config \
   -v /home/dorothy/torrents/downloads:/downloads \
@@ -116,9 +116,9 @@ docker pull linuxserver/jellyfin
 echo "re-initialise jellyfin container..."
 docker run -d \
   --name=jellyfin \
-  -e PUID=1000 \
-  -e PGID=8675309 \
-  -e TZ=Australia/Melbourne \
+  -e PUID=<PUID> \
+  -e PGID=<PGID> \
+  -e TZ=<Country/City> \
   -e UMASK_SET=002 \
   -e NVIDIA_DRIVER_CAPABILITIES=all \
   -e NVIDIA_VISIBLE_DEVICES=all \
@@ -158,9 +158,9 @@ docker pull linuxserver/radarr
 echo "re-initialise radarr container..."
 docker run -d \
   --name=radarr \
-  -e PUID=1000 \
-  -e PGID=8675309 \
-  -e TZ=Australia/Melbourne \
+  -e PUID=<PUID> \
+  -e PGID=<PGID> \
+  -e TZ=<Country/City> \
   -e UMASK_SET=002 \
   -p 7878:7878 \
   -v /home/docker/radarr/config:/config \
@@ -191,9 +191,9 @@ docker pull linuxserver/sonarr
 echo "re-initialise sonarr container..."
 docker run -d \
   --name=sonarr \
-  -e PUID=1000 \
-  -e PGID=8675309 \
-  -e TZ=Australia/Melbourne \
+  -e PUID=<PUID> \
+  -e PGID=<PGID> \
+  -e TZ=<Country/City> \
   -e UMASK_SET=002 \
   -p 8989:8989 \
   -v /home/docker/sonarr/config:/config \
@@ -233,9 +233,9 @@ docker pull linuxserver/qbittorrent
 echo "re-initialise qbittorrent container..."
 docker run -d \
   --name=qbittorrent \
-  -e PUID=1000 \
-  -e PGID=8675309 \
-  -e TZ=Australia/Melbourne \
+  -e PUID=<PUID> \
+  -e PGID=<PGID> \
+  -e TZ=<Country/City> \
   -e UMASK_SET=002 \
   -e WEBUI_PORT=8081 \
   -p 60499:51413 \
