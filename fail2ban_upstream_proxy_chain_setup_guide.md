@@ -61,21 +61,27 @@ This approach dynamically creates, manages, and removes separate `iptables` chai
    [Definition]
 
    # Option: actionban
+   # 1. Create the chain if it doesn't exist
+   # 2. Add the banned IP to the dynamic chain based on the jail name
+   # 3. Log the result
    actionban = ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@<upstream-server-ip> \
-                'iptables -N f2b-%(name)s 2>/dev/null || true; \
-                 iptables -C INPUT -j f2b-%(name)s 2>/dev/null || iptables -I INPUT -j f2b-%(name)s; \
-                 iptables -I f2b-%(name)s 1 -s %(ip)s -j DROP' && \
-                echo "Banned %(ip)s from jail %(name)s via upstream proxy" >> /var/log/fail2ban.log
-
+                   'iptables -N f2b-<name> 2>/dev/null || true; \
+                    iptables -C INPUT -j f2b-<name> 2>/dev/null || iptables -I INPUT -j f2b-<name>; \
+                    iptables -I f2b-<name> 1 -s <ip> -j DROP' && \
+                    echo "Banned <ip> from jail <name> via upstream proxy" >> /var/log/fail2ban.log
+   
    # Option: actionunban
+   # 1. Remove the banned IP from the dynamic chain
+   # 2. Remove the chain if it becomes empty (cleanup)
+   # 3. Log the result
    actionunban = ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@<upstream-server-ip> \
-                'iptables -D f2b-%(name)s -s %(ip)s -j DROP; \
-                 if ! iptables -L f2b-%(name)s | grep -q "DROP"; then \
-                     iptables -D INPUT -j f2b-%(name)s; \
-                     iptables -F f2b-%(name)s; \
-                     iptables -X f2b-%(name)s; \
-                 fi' && \
-                echo "Unbanned %(ip)s from jail %(name)s via upstream proxy and cleaned up chain if empty" >> /var/log/fail2ban.log
+                   'iptables -D f2b-<name> -s <ip> -j DROP; \
+                    if ! iptables -L f2b-<name> | grep -q "DROP"; then \
+                        iptables -D INPUT -j f2b-<name>; \
+                        iptables -F f2b-<name>; \
+                        iptables -X f2b-<name>; \
+                    fi' && \
+                    echo "Unbanned <ip> from jail <name> via upstream proxy and cleaned up chain if empty" >> /var/log/fail2ban.log
    ```
 
    Replace `<upstream-server-ip>` with the actual IP address of your upstream server.
